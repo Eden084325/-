@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>啃料 10 · NPR 英语精修</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+  :root{
+    color-scheme: light;
+    --red:#CC0000;
+    --red-d:#A00000;
+    --red-soft:#FBE3E3;
+    --ink:#0A0A0A;
+    --ink-2:#1a1a1a;
+    --bg:#F2F2F2;
+    --card:#FFFFFF;
+    --gray:#565656;
+    --gray-2:#8a8a8a;
+    --line:#E2E2E2;
+    --line-2:#EFEFEF;
+    --sans:"Helvetica Neue",Helvetica,Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono","Menlo","Consolas",monospace;
+    --sh:0 1px 2px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.08);
+    --sh-lg:0 4px 16px rgba(0,0,0,.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+  a{color:var(--red);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  button{font-family:inherit;cursor:pointer;}
+  h1,h2,h3{margin:0;font-weight:800;letter-spacing:-.01em;}
+  .mono{font-family:var(--mono);}
+  .wrap{max-width:940px;margin:0 auto;padding:0 16px 80px;}
+
+  /* ---------- masthead (CNN-style) ---------- */
+  .topstrip{height:4px;background:var(--red);}
+  .masthead{background:var(--ink);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:16px;
+    padding:16px 20px;flex-wrap:wrap;}
+  .mh-left{display:flex;align-items:center;gap:16px;min-width:0;}
+  .logo{display:flex;align-items:center;gap:0;flex-shrink:0;}
+  .logo-box{background:var(--red);color:#fff;font-weight:800;font-size:22px;letter-spacing:.02em;padding:6px 10px;}
+  .logo-num{background:#fff;color:var(--ink);font-weight:800;font-size:22px;padding:6px 10px;}
+  .mh-titles{min-width:0;}
+  .eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#ff6b6b;}
+  .mh-sub{font-size:12.5px;color:#c9c9c9;margin-top:3px;max-width:430px;font-weight:400;}
+  .mh-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+  .live{display:inline-flex;align-items:center;gap:7px;background:var(--red);color:#fff;font-size:11px;font-weight:800;
+    letter-spacing:.08em;padding:5px 11px;border-radius:2px;white-space:nowrap;}
+  .live .dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1.4s steps(1) infinite;}
+  @keyframes blink{50%{opacity:.25}}
+
+  /* season progress bar */
+  .season{background:var(--ink-2);color:#fff;display:flex;align-items:center;gap:14px;padding:12px 20px;flex-wrap:wrap;}
+  .season-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#bdbdbd;white-space:nowrap;}
+  .season-bar{flex:1;min-width:200px;height:22px;background:#000;position:relative;overflow:hidden;border:1px solid #333;}
+  .season-fill{position:absolute;left:0;top:0;height:100%;background:var(--red);transition:width .6s cubic-bezier(.4,1,.4,1);}
+  .season-needle{position:absolute;top:-2px;height:26px;width:2px;background:#fff;transition:left .6s cubic-bezier(.4,1,.4,1);}
+  .season-ticks{position:absolute;inset:0;display:flex;pointer-events:none;}
+  .season-ticks span{flex:1;border-right:1px solid rgba(255,255,255,.18);}
+  .season-ticks span:last-child{border-right:none;}
+  .season-cap{font-size:13px;font-weight:700;white-space:nowrap;}
+  .season-cap b{color:#ff6b6b;font-size:18px;}
+
+  /* ---------- stats ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:12px 14px;box-shadow:var(--sh);border-top:3px solid var(--ink);}
+  .stat.flame{border-top-color:var(--red);}
+  .stat.done{border-top-color:var(--red);}
+  .stat .k{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--gray-2);text-transform:uppercase;}
+  .stat .v{font-size:27px;font-weight:800;line-height:1.05;margin-top:5px;letter-spacing:-.02em;}
+  .stat .v small{font-size:12px;color:var(--gray-2);font-weight:600;letter-spacing:0;}
+  .stat.flame .v,.stat.done .v{color:var(--red);}
+
+  /* ---------- section headers ---------- */
+  .sec-head{display:flex;align-items:center;gap:10px;margin:30px 0 14px;border-bottom:2px solid var(--ink);padding-bottom:8px;}
+  .sec-head .no{background:var(--red);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;padding:2px 7px;border-radius:2px;}
+  .sec-head h2{font-size:19px;font-weight:800;text-transform:uppercase;letter-spacing:.01em;}
+  .sec-head .hint{font-size:11.5px;color:var(--gray-2);margin-left:auto;font-weight:600;text-transform:none;letter-spacing:0;}
+
+  .cards-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:16px;box-shadow:var(--sh);}
+  .box h3{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--ink);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+  .box h3 span{font-size:10.5px;color:var(--gray-2);font-weight:600;text-transform:none;letter-spacing:0;}
+  .chart-holder{position:relative;height:196px;}
+
+  /* ---------- review (breaking-news feel) ---------- */
+  .review-list{display:flex;flex-direction:column;gap:8px;}
+  .review-item{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:3px;box-shadow:var(--sh);}
+  .review-item .rt{flex:1;min-width:0;}
+  .review-item .rt .t{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .review-item .rt .s{font-size:11.5px;color:var(--gray-2);font-weight:600;margin-top:1px;}
+  .badge{font-family:var(--sans);font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:2px;white-space:nowrap;}
+  .badge.due{background:var(--red);color:#fff;}
+  .badge.soon{background:var(--line);color:var(--gray);}
+  .empty{color:var(--gray-2);font-size:13px;padding:16px;text-align:center;border:1px dashed var(--line);border-radius:4px;background:var(--card);font-weight:600;}
+  .btn-mini{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border:none;color:#fff;background:var(--red);padding:6px 11px;border-radius:2px;}
+  .btn-mini:hover{background:var(--red-d);}
+
+  /* ---------- toolbar / buttons ---------- */
+  .toolbar{display:flex;gap:9px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+  .btn{border:none;border-radius:3px;padding:10px 16px;font-size:13.5px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;}
+  .btn.primary{background:var(--red);color:#fff;}
+  .btn.primary:hover{background:var(--red-d);}
+  .btn.ghost{background:var(--card);border:1.5px solid var(--ink);color:var(--ink);}
+  .btn.ghost:hover{background:var(--ink);color:#fff;}
+  a.btn{display:inline-flex;align-items:center;text-decoration:none;}
+  a.btn.ghost:hover{color:#fff;text-decoration:none;}
+  .npr-hint{font-size:12px;color:var(--gray);margin:-2px 0 16px;line-height:1.7;font-weight:600;}
+  .npr-hint .mono{background:var(--card);border:1px solid var(--line);border-radius:3px;padding:2px 7px;user-select:all;color:var(--red);font-weight:700;}
+  .copybtn{font-family:var(--mono);font-size:11px;border:1px solid var(--line);background:var(--card);color:var(--gray);padding:2px 8px;border-radius:3px;margin-left:4px;}
+  .copybtn:hover{border-color:var(--red);color:var(--red);}
+
+  /* ---------- material cards (news story) ---------- */
+  .track{background:var(--card);border:1px solid var(--line);border-radius:4px;margin-bottom:11px;box-shadow:var(--sh);overflow:hidden;transition:box-shadow .2s;}
+  .track:hover{box-shadow:var(--sh-lg);}
+  .track.open{border-color:var(--ink);}
+  .track-head{display:flex;align-items:center;gap:13px;padding:14px 16px;cursor:pointer;}
+  .track-num{font-family:var(--mono);font-size:13px;font-weight:700;color:#fff;background:var(--ink);width:30px;height:30px;border-radius:2px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .track.open .track-num{background:var(--red);}
+  .track-main{flex:1;min-width:0;}
+  .track-title{font-size:16.5px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25;}
+  .track-meta{font-size:11.5px;color:var(--gray-2);margin-top:3px;display:flex;gap:12px;flex-wrap:wrap;font-weight:600;}
+  .track-meta a{color:var(--red);}
+  .track-caret{color:var(--gray-2);transition:transform .25s;flex-shrink:0;font-size:12px;}
+  .track.open .track-caret{transform:rotate(90deg);}
+
+  .ladder{display:flex;gap:4px;align-items:center;flex-shrink:0;}
+  .rung{width:26px;height:7px;border-radius:1px;background:var(--line);}
+  .rung.on{background:var(--red);}
+  .ladder-pct{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink);margin-left:4px;}
+
+  .track-body{display:none;border-top:1px solid var(--line);padding:6px 16px 18px;}
+  .track.open .track-body{display:block;}
+
+  .steps{display:flex;flex-direction:column;gap:0;margin-top:12px;}
+  .step{display:flex;gap:13px;padding:12px 2px;border-bottom:1px solid var(--line-2);}
+  .step:last-child{border-bottom:none;}
+  .step-check{width:27px;height:27px;border-radius:3px;border:2px solid var(--line);background:var(--card);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--gray-2);cursor:pointer;}
+  .step.done .step-check{background:var(--red);border-color:var(--red);color:#fff;}
+  .step-body{flex:1;}
+  .step-t{font-weight:800;font-size:14px;display:flex;gap:8px;align-items:center;}
+  .step-t .num{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--ink);padding:2px 6px;border-radius:2px;}
+  .step.done .step-t .num{background:var(--red);}
+  .step-d{font-size:12.5px;color:var(--gray);margin-top:4px;font-weight:500;}
+  .step.done .step-t{color:var(--red);}
+
+  .field{margin-top:14px;}
+  .field label{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);display:block;margin-bottom:6px;}
+  .field textarea,.field input,.field select{width:100%;border:1px solid var(--line);border-radius:3px;padding:9px 11px;font-family:inherit;font-size:14px;background:var(--card);color:var(--ink);}
+  .field textarea{resize:vertical;min-height:70px;line-height:1.6;}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--red);}
+  .transcript{font-size:15px;line-height:1.85;background:#FAFAFA;border:1px solid var(--line);border-left:3px solid var(--red);border-radius:3px;padding:14px 16px;white-space:pre-wrap;max-height:280px;overflow:auto;margin-top:8px;}
+  .disclosure{margin-top:14px;}
+  .disclosure summary{cursor:pointer;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--red);list-style:none;}
+  .disclosure summary::-webkit-details-marker{display:none;}
+  .disclosure summary::before{content:"▸ ";}
+  .disclosure[open] summary::before{content:"▾ ";}
+
+  /* tempo */
+  .tempo{background:#FAFAFA;border:1px solid var(--line);border-radius:4px;padding:14px;margin-top:12px;}
+  .tempo-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .timer-display{font-family:var(--mono);font-size:30px;font-weight:700;color:var(--ink);letter-spacing:1px;}
+  .tempo-meter{height:14px;border-radius:2px;background:var(--line);position:relative;overflow:hidden;margin-top:12px;}
+  .tempo-meter .fill{position:absolute;left:0;top:0;height:100%;background:var(--red);transition:width .5s;}
+  .tempo-meter .target{position:absolute;top:-4px;height:22px;width:2px;background:var(--ink);}
+  .tempo-legend{display:flex;justify-content:space-between;font-size:10.5px;color:var(--gray-2);margin-top:6px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+  .tempo-note{font-size:12.5px;color:var(--gray);margin-top:8px;font-weight:600;}
+
+  /* ---------- audio player (dark, video-player feel) ---------- */
+  .player{background:var(--ink);border-radius:4px;padding:14px;margin-top:12px;color:#fff;}
+  .player-empty{display:flex;flex-direction:column;gap:9px;}
+  .player-empty .lbl{font-size:13px;color:#dcdcdc;font-weight:700;}
+  .filebtn{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;
+    background:var(--red);color:#fff;border:none;border-radius:3px;padding:10px 16px;cursor:pointer;}
+  .filebtn:hover{background:var(--red-d);}
+  .player-hint{font-size:11.5px;color:#a8a8a8;line-height:1.65;font-weight:500;}
+  .player-hint .mono{background:rgba(255,255,255,.1);padding:1px 6px;border-radius:3px;user-select:all;}
+  .player-hint b{color:#ff8080;}
+  .pl-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .pl-name{font-size:12px;color:#a8a8a8;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
+  .pl-btn{width:38px;height:38px;border-radius:50%;border:none;background:var(--red);color:#fff;font-size:15px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .pl-btn:hover{background:var(--red-d);}
+  .pl-btn.sm{width:32px;height:32px;font-size:12px;font-weight:700;background:rgba(255,255,255,.12);color:#fff;}
+  .pl-btn.sm:hover{background:rgba(255,255,255,.22);}
+  .pl-btn.sm.on{background:var(--red);}
+  .pl-seek{flex:1;min-width:120px;accent-color:var(--red);cursor:pointer;height:4px;}
+  .pl-time{font-family:var(--mono);font-size:12px;color:#dcdcdc;white-space:nowrap;}
+  .pl-speeds{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+  .pl-speeds .slbl{font-size:10.5px;color:#a8a8a8;font-weight:800;text-transform:uppercase;letter-spacing:.06em;}
+  .spd{font-family:var(--mono);font-size:12px;border:1px solid rgba(255,255,255,.25);background:transparent;color:#dcdcdc;border-radius:3px;padding:4px 9px;cursor:pointer;}
+  .spd:hover{border-color:var(--red);}
+  .spd.on{background:var(--red);color:#fff;border-color:var(--red);font-weight:700;}
+  .pl-chg{font-size:11px;color:#a8a8a8;background:none;border:none;text-decoration:underline;cursor:pointer;}
+  .pl-chg:hover{color:#ff8080;}
+  audio{filter:contrast(1);}
+
+  /* log */
+  .log-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;}
+  .log-row input{width:82px;border:1px solid var(--line);border-radius:3px;padding:7px 9px;font-family:var(--mono);}
+  .chip{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;background:var(--red-soft);color:var(--red);padding:4px 9px;border-radius:2px;}
+  .del{margin-left:auto;background:transparent;border:none;color:var(--gray-2);font-size:12px;text-decoration:underline;font-weight:600;}
+  .del:hover{color:var(--red);}
+
+  /* modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:center;padding:30px 16px;z-index:50;overflow:auto;}
+  .modal-bg.show{display:flex;}
+  .modal{background:var(--card);border-radius:4px;max-width:560px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.4);border-top:5px solid var(--red);}
+  .modal h2{font-size:20px;font-weight:800;text-transform:uppercase;margin-bottom:4px;}
+  .modal .sub{font-size:13px;color:var(--gray);margin-bottom:8px;font-weight:500;}
+  .tip{background:var(--red-soft);border:1px solid #f0bcbc;border-radius:3px;padding:10px 12px;font-size:12.5px;color:var(--red-d);margin:12px 0;line-height:1.6;font-weight:600;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+  .footnote{color:var(--gray-2);font-size:12px;margin-top:34px;line-height:1.7;border-top:1px solid var(--line);padding-top:16px;font-weight:600;}
+  .footnote b{color:var(--gray);}
+
+  @media(max-width:640px){
+    .stats{grid-template-columns:1fr 1fr;}
+    .cards-2{grid-template-columns:1fr;}
+    .two{grid-template-columns:1fr;}
+    .masthead{align-items:flex-start;}
+    .mh-right{align-items:flex-start;}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="topstrip"></div>
+<div class="masthead">
+  <div class="mh-left">
+    <div class="logo"><span class="logo-box">啃料</span><span class="logo-num">10</span></div>
+    <div class="mh-titles">
+      <div class="eyebrow">尚雯婕「啃料」学习法 · 源自 NPR</div>
+      <div class="mh-sub">逐字听写 → 通篇背诵 → 背到与原声同速。一月一篇，十篇上线，把英语调成你的工作频道。</div>
+    </div>
+  </div>
+  <div class="mh-right">
+    <div class="live"><span class="dot"></span>LIVE · <span id="onairCount">0</span> 篇进行中</div>
+  </div>
+</div>
+<div class="season">
+  <div class="season-label">本季征途</div>
+  <div class="season-bar">
+    <div class="season-fill" id="dialFill" style="width:0%"></div>
+    <div class="season-needle" id="dialNeedle" style="left:0%"></div>
+    <div class="season-ticks" id="dialTicks"></div>
+  </div>
+  <div class="season-cap"><b id="doneCount">0</b> / <span id="goalCount">10</span> 篇上线</div>
+</div>
+
+<div class="wrap">
+
+  <!-- ===== STATS ===== -->
+  <div class="stats">
+    <div class="stat"><div class="k">累计学习</div><div class="v" id="statMinutes">0<small> 分钟</small></div></div>
+    <div class="stat flame"><div class="k">连续打卡</div><div class="v" id="statStreak">0<small> 天</small></div></div>
+    <div class="stat done"><div class="k">已上线</div><div class="v" id="statDone">0<small> 篇</small></div></div>
+    <div class="stat"><div class="k">今日复习</div><div class="v" id="statReview">0<small> 篇待复习</small></div></div>
+  </div>
+
+  <!-- ===== CHARTS ===== -->
+  <div class="sec-head"><span class="no">01</span><h2>学习成果</h2><span class="hint">数据实时保存在本机</span></div>
+  <div class="cards-2">
+    <div class="box">
+      <h3>十篇征途 <span id="journeyLegend"></span></h3>
+      <div class="chart-holder"><canvas id="journeyChart"></canvas></div>
+    </div>
+    <div class="box">
+      <h3>最近 14 天投入 <span>分钟 / 天</span></h3>
+      <div class="chart-holder"><canvas id="minutesChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ===== REVIEW ===== -->
+  <div class="sec-head"><span class="no">02</span><h2>今日复习</h2><span class="hint">背过的料，按遗忘曲线回炉</span></div>
+  <div class="review-list" id="reviewList"></div>
+
+  <!-- ===== MATERIALS ===== -->
+  <div class="sec-head"><span class="no">03</span><h2>我的料</h2><span class="hint" id="matHint"></span></div>
+  <div class="toolbar">
+    <button class="btn primary" id="addBtn">+ 添加一档 NPR 材料</button>
+    <a class="btn ghost" id="findBtn" href="https://www.npr.org/" target="_blank" rel="noopener">去 NPR 找料 ↗</a>
+    <button class="btn ghost" id="exportBtn">⬇ 导出进度</button>
+    <button class="btn ghost" id="importBtn">⬆ 导入进度</button>
+    <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+  </div>
+  <div class="npr-hint">
+    点上面若打不开，手动复制到浏览器：
+    <span class="mono" id="nprUrlText">https://www.npr.org</span><button class="copybtn" id="copyNpr">复制</button><br>
+    基础起步推荐（短音频）：<span class="mono" style="user-select:all">npr.org/podcasts/510318/up-first</span> ·
+    <span class="mono" style="user-select:all">npr.org/sections/storycorps</span>
+  </div>
+  <div id="materials"></div>
+
+  <div class="footnote">
+    <b>四步法</b>：① 选材料 · ② 逐字听写查词 · ③ 通篇背诵 · ④ 背到与原声同速。<br>
+    进度、笔记、计时保存在当前电脑的浏览器里。换电脑用：先「导出进度」得到备份文件，拷到另一台电脑「导入进度」即可；音频文件（OGG/WAV）请随身携带、各电脑重新载入。
+  </div>
+</div>
+
+<!-- ===== ADD MODAL ===== -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2>添加一档 NPR 材料</h2>
+    <div class="sub">先去 NPR 挑一段你感兴趣、听得下去的音频，把文稿和链接贴进来。</div>
+    <div class="tip" id="levelTip"></div>
+    <div class="tip" style="background:#eee;border-color:#ccc;color:#444;">🎧 音频请用 <b>OGG / WAV / Opus</b> 格式（内嵌浏览器不支持 MP3）。下载的是 mp3 也没关系——发给我，我帮你转成 ogg。</div>
+    <div class="field"><label>标题（节目名 / 主题）</label><input id="fTitle" placeholder="例：Morning news brief — a short one"></div>
+    <div class="two">
+      <div class="field"><label>NPR 原文链接（可选）</label><input id="fNpr" placeholder="https://www.npr.org/..."></div>
+      <div class="field"><label>音频页链接（可选，方便回去下载）</label><input id="fAudio" placeholder="音频页面地址"></div>
+    </div>
+    <div class="field"><label>音频时长（用于第 4 步"背到原速"的目标）</label>
+      <input id="fDur" placeholder="例：4:30 （分:秒）；载入本地音频后会自动填写"></div>
+    <div class="field"><label>文稿 / Transcript（听写核对与背诵用）</label>
+      <textarea id="fText" rows="5" placeholder="把 NPR 页面上的文字稿粘贴进来。听写时先不看，写完再来对照。"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="cancelBtn">取消</button>
+      <button class="btn primary" id="saveBtn">加入我的料</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------------- storage ---------------- */
+const KEY = "kenliao_state_v1";
+const STEP_DEFS = [
+  {k:"select", num:"步骤 1", t:"选材料", d:"找到感兴趣、难度合适的 NPR 音频，下载/收藏它。加入这里即视为完成。"},
+  {k:"dictation", num:"步骤 2", t:"精听 + 逐字听写", d:"不看文稿，一个字一个字把它听写出来，生词逐个查字典，直到完全听懂。"},
+  {k:"recite", num:"步骤 3", t:"通篇背诵", d:"在单词、语法全部理解之后，把整篇从头背到尾。"},
+  {k:"speed", num:"步骤 4", t:"背到与原声同速", d:"反复练到能以音频本身的语速脱口而出——语感就是这样练出来的。"}
+];
+const REVIEW_INTERVALS=[1,2,4,7,15]; // days
+const LEVEL_TIPS={
+  beginner:"你的基础偏弱：从 NPR 里挑<b>短</b>的（3–5 分钟）、语速慢一点的段落起步，比如 “Up First” 的单条新闻、StoryCorps 短故事。别一上来就啃长访谈。",
+};
+
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.materials)return s;}catch(e){}
+  return {materials:[], settings:{goal:10, level:"beginner"}, ver:1};
+}
+function save(){localStorage.setItem(KEY, JSON.stringify(state));}
+let state = load();
+
+/* ---------------- helpers ---------------- */
+const $=s=>document.querySelector(s);
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function today(){const d=new Date();return d.toISOString().slice(0,10);}
+function dateStr(d){return d.toISOString().slice(0,10);}
+function daysBetween(a,b){return Math.round((new Date(b)-new Date(a))/86400000);}
+function parseDur(s){ // "4:30" or "270" -> seconds
+  if(!s)return 0;s=String(s).trim();
+  if(s.includes(":")){const p=s.split(":").map(Number);return (p[0]||0)*60+(p[1]||0);}
+  const n=Number(s);return isNaN(n)?0:n;
+}
+function fmtDur(sec){if(!sec)return "—";const m=Math.floor(sec/60),s=sec%60;return m+":"+String(s).padStart(2,"0");}
+function stepsDone(m){return STEP_DEFS.filter(s=>m.steps[s.k]).length;}
+function totalMinutes(){let t=0;state.materials.forEach(m=>m.log.forEach(l=>t+=l.minutes));return t;}
+function allLogDates(){const s=new Set();state.materials.forEach(m=>m.log.forEach(l=>s.add(l.date)));return s;}
+function streak(){
+  const set=allLogDates();if(set.size===0)return 0;
+  let n=0;let d=new Date();
+  // allow today OR start from yesterday if today not logged
+  if(!set.has(dateStr(d))){d.setDate(d.getDate()-1);}
+  while(set.has(dateStr(d))){n++;d.setDate(d.getDate()-1);}
+  return n;
+}
+function isDone(m){return stepsDone(m)===4;}
+function reviewInfo(m){
+  // eligible once recite (step3) done
+  if(!m.steps.recite)return null;
+  const anchor = m.lastReviewAt || m.reciteDate || m.createdAt;
+  const idx = Math.min(m.reviewCount||0, REVIEW_INTERVALS.length-1);
+  const dueDate = new Date(anchor); dueDate.setDate(dueDate.getDate()+REVIEW_INTERVALS[idx]);
+  const diff = daysBetween(today(), dateStr(dueDate));
+  return {due: diff<=0, inDays: diff, stage: (m.reviewCount||0)+1};
+}
+
+/* ---------------- render ---------------- */
+let journeyChart, minutesChart;
+
+function render(){
+  renderHeader();
+  renderStats();
+  renderReview();
+  renderMaterials();
+  renderCharts();
+  save();
+}
+
+function renderHeader(){
+  const goal=state.settings.goal;
+  const done=state.materials.filter(isDone).length;
+  const inprog=state.materials.filter(m=>!isDone(m)&&stepsDone(m)>0).length;
+  $("#goalCount").textContent=goal;
+  $("#doneCount").textContent=done;
+  $("#onairCount").textContent=inprog;
+  const pct=Math.min(100, done/goal*100);
+  $("#dialFill").style.width=pct+"%";
+  $("#dialNeedle").style.left=pct+"%";
+  // ticks
+  const tk=$("#dialTicks");if(!tk.childElementCount){for(let i=0;i<goal;i++)tk.appendChild(el("span"));}
+}
+
+function renderStats(){
+  $("#statMinutes").innerHTML=totalMinutes()+'<small> 分钟</small>';
+  $("#statStreak").innerHTML=streak()+'<small> 天</small>';
+  $("#statDone").innerHTML=state.materials.filter(isDone).length+'<small> 篇</small>';
+  const due=state.materials.filter(m=>{const r=reviewInfo(m);return r&&r.due;}).length;
+  $("#statReview").innerHTML=due+'<small> 篇待复习</small>';
+  $("#matHint").textContent=state.materials.length? state.materials.length+" 档在库" : "";
+}
+
+function renderReview(){
+  const list=$("#reviewList");list.innerHTML="";
+  const items=state.materials.map(m=>({m,r:reviewInfo(m)})).filter(x=>x.r)
+    .sort((a,b)=>a.r.inDays-b.r.inDays);
+  const due=items.filter(x=>x.r.due);
+  const soon=items.filter(x=>!x.r.due).slice(0,2);
+  const show=[...due,...soon];
+  if(show.length===0){
+    list.appendChild(el("div","empty","还没有可复习的料。背完第 3 步（通篇背诵）后，这里会按遗忘曲线提醒你回炉。"));
+    return;
+  }
+  show.forEach(({m,r})=>{
+    const item=el("div","review-item");
+    const info=el("div","rt");
+    info.appendChild(el("div","t",escapeHtml(m.title)));
+    info.appendChild(el("div","s", r.due? ("第 "+r.stage+" 轮复习 · 已到期") : ("第 "+r.stage+" 轮 · "+r.inDays+" 天后")));
+    item.appendChild(info);
+    const badge=el("span","badge "+(r.due?"due":"soon"), r.due?"待复习":(r.inDays+"d"));
+    item.appendChild(badge);
+    if(r.due){
+      const b=el("button","btn-mini","✓ 复习完成");
+      b.onclick=()=>{m.lastReviewAt=today();m.reviewCount=(m.reviewCount||0)+1;render();};
+      item.appendChild(b);
+    }
+    list.appendChild(item);
+  });
+}
+
+function renderMaterials(){
+  const c=$("#materials");c.innerHTML="";
+  if(state.materials.length===0){
+    c.appendChild(el("div","empty","空空如也。点上面「添加一档 NPR 材料」，把你的第一段音频请上电台。"));
+    return;
+  }
+  state.materials.forEach((m,i)=>c.appendChild(trackEl(m,i)));
+}
+
+function ladderEl(m){
+  const done=stepsDone(m);
+  const lad=el("div","ladder");
+  STEP_DEFS.forEach(s=>lad.appendChild(el("div","rung"+(m.steps[s.k]?" on":""))));
+  lad.appendChild(el("div","ladder-pct",done+"/4"));
+  return lad;
+}
+function updateLadder(wrap,m){
+  const old=wrap.querySelector(".track-head .ladder");
+  if(old)old.replaceWith(ladderEl(m));
+}
+
+function trackEl(m,i){
+  const wrap=el("div","track"+(m._open?" open":""));
+  // head
+  const head=el("div","track-head");
+  head.appendChild(el("div","track-num",String(i+1).padStart(2,"0")));
+  const main=el("div","track-main");
+  main.appendChild(el("div","track-title",escapeHtml(m.title)));
+  const meta=el("div","track-meta");
+  meta.innerHTML = (m.durSec?('<span>⏱ '+fmtDur(m.durSec)+'</span>'):'') +
+    (m.audioName?('<span>🎧 音频已载入</span>'):'') +
+    (m.nprUrl?('<span><a href="'+escapeAttr(m.nprUrl)+'" target="_blank" rel="noopener">NPR 原文 ↗</a></span>'):'') +
+    (m.audioUrl?('<span><a href="'+escapeAttr(m.audioUrl)+'" target="_blank" rel="noopener">音频页 ↗</a></span>'):'') +
+    '<span>已投入 '+m.log.reduce((s,l)=>s+l.minutes,0)+' 分钟</span>';
+  main.appendChild(meta);
+  head.appendChild(main);
+  head.appendChild(ladderEl(m));
+  head.appendChild(el("div","track-caret","▶"));
+  head.onclick=(e)=>{if(e.target.tagName==="A")return;m._open=!m._open;render();};
+  wrap.appendChild(head);
+
+  // body (built only when open, so audio players aren't spun up for closed tracks)
+  const body=el("div","track-body");
+  if(m._open) buildBody(m,wrap,body);
+  wrap.appendChild(body);
+  return wrap;
+}
+
+function buildBody(m,wrap,body){
+  // ---- audio player (top: audio is central to dictation) ----
+  body.appendChild(buildPlayer(m,wrap));
+
+  // ---- four steps ----
+  const steps=el("div","steps");
+  STEP_DEFS.forEach(s=>{
+    const st=el("div","step"+(m.steps[s.k]?" done":""));
+    const chk=el("div","step-check",m.steps[s.k]?"✓":"");
+    chk.onclick=()=>{
+      m.steps[s.k]=!m.steps[s.k];
+      if(s.k==="recite"&&m.steps.recite&&!m.reciteDate)m.reciteDate=today();
+      save();
+      st.classList.toggle("done",m.steps[s.k]);
+      chk.textContent=m.steps[s.k]?"✓":"";
+      updateLadder(wrap,m);
+      renderHeader();renderStats();renderReview();renderCharts();  // light update — keeps audio playing
+    };
+    st.appendChild(chk);
+    const sb=el("div","step-body");
+    sb.appendChild(el("div","step-t",'<span class="num">'+s.num+'</span> '+s.t));
+    sb.appendChild(el("div","step-d",s.d));
+    st.appendChild(sb);
+    steps.appendChild(st);
+  });
+  body.appendChild(steps);
+
+  // ---- tempo / recitation timer ----
+  body.appendChild(tempoEl(m));
+
+  // ---- study log ----
+  const log=el("div","log-row");
+  log.innerHTML='<span class="chip">记录今日学习</span>';
+  const inp=el("input");inp.type="number";inp.min="1";inp.placeholder="分钟";inp.className="mono";
+  const addLog=el("button","btn-mini","+ 记入");
+  addLog.onclick=()=>{const v=parseInt(inp.value,10);if(!v||v<=0)return;
+    m.log.push({date:today(),minutes:v});inp.value="";
+    save();renderHeader();renderStats();renderCharts();
+    const meta=wrap.querySelector(".track-meta");
+    if(meta)meta.lastElementChild.textContent='已投入 '+m.log.reduce((s,l)=>s+l.minutes,0)+' 分钟';};
+  log.appendChild(inp);log.appendChild(addLog);
+  const del=el("button","del","删除这档");
+  del.onclick=()=>{if(confirm("确定删除「"+m.title+"」？此操作无法撤销。")){
+    if(audioURLCache[m.id]){URL.revokeObjectURL(audioURLCache[m.id]);delete audioURLCache[m.id];}
+    idbDel(m.id);
+    state.materials=state.materials.filter(x=>x!==m);render();}};
+  log.appendChild(del);
+  body.appendChild(log);
+
+  // ---- notes ----
+  const notes=el("div","field");
+  notes.innerHTML='<label>生词 / 笔记（自动保存）</label>';
+  const ta=el("textarea");ta.value=m.notes||"";ta.placeholder="听写时遇到的生词、难句记在这里…";
+  ta.oninput=()=>{m.notes=ta.value;save();};
+  notes.appendChild(ta);
+  body.appendChild(notes);
+
+  // ---- transcript ----
+  if(m.transcript){
+    const dis=el("details","disclosure");
+    dis.appendChild(el("summary",null,"查看文稿 Transcript"));
+    dis.appendChild(el("div","transcript",escapeHtml(m.transcript)));
+    body.appendChild(dis);
+  }
+}
+
+/* recitation timer + tempo meter */
+const timers={}; // id -> {start, raf, elapsed}
+function tempoEl(m){
+  const box=el("div","tempo");
+  const top=el("div","tempo-top");
+  const disp=el("div","timer-display");disp.id="t_"+m.id;
+  const running=timers[m.id];
+  disp.textContent=running? fmt(running.elapsed) : "0:00";
+  top.appendChild(disp);
+  const startBtn=el("button","btn-mini", running?"■ 停止并记录":"● 开始背诵计时");
+  startBtn.style.fontSize="12px";startBtn.style.padding="7px 12px";
+  startBtn.onclick=()=>toggleTimer(m,startBtn);
+  top.appendChild(startBtn);
+  if(m.durSec){
+    top.appendChild(el("span","chip","原声 "+fmtDur(m.durSec)));
+  }
+  box.appendChild(top);
+
+  // meter: latest recite time vs target
+  const best=m.reciteTimes&&m.reciteTimes.length?Math.min(...m.reciteTimes.map(r=>r.seconds)):0;
+  const latest=m.reciteTimes&&m.reciteTimes.length?m.reciteTimes[m.reciteTimes.length-1].seconds:0;
+  if(m.durSec){
+    const meter=el("div","tempo-meter");
+    // fill = how close latest is to target speed. reciting slower than audio => longer time.
+    // ratio = target/yourtime (>=1 means at or faster than original pace)
+    let pct=0;
+    if(latest>0){pct=Math.min(100, Math.round(m.durSec/latest*100));}
+    const fill=el("div","fill");fill.style.width=pct+"%";
+    meter.appendChild(fill);
+    const tgt=el("div","target");tgt.style.left="100%";meter.appendChild(tgt);
+    box.appendChild(meter);
+    const lg=el("div","tempo-legend");
+    lg.innerHTML='<span>慢</span><span>越接近原声语速 →</span><span>原速 ✔</span>';
+    box.appendChild(lg);
+    let note="";
+    if(latest===0){note="第 4 步目标：把整篇背到能用音频本身的语速说出来。点上面开始计时，测一次你背完全篇要多久。";}
+    else{
+      note="最近一次背完用时 "+fmt(latest)+"（原声 "+fmtDur(m.durSec)+"）";
+      if(best) note+=" · 最快 "+fmt(best);
+      if(latest<=m.durSec*1.05){note+="。已达原速，漂亮！🎯";}
+      else{note+="。再练几遍，把用时压到接近原声长度。";}
+    }
+    box.appendChild(el("div","tempo-note",note));
+  } else {
+    box.appendChild(el("div","tempo-note","想用「背到原速」计时器？在材料信息里补上音频时长即可对照。"));
+  }
+  return box;
+}
+function fmt(sec){const m=Math.floor(sec/60),s=sec%60;return m+":"+String(s).padStart(2,"0");}
+function toggleTimer(m,btn){
+  const t=timers[m.id];
+  if(t){ // stop
+    cancelAnimationFrame(t.raf);
+    const secs=Math.round(t.elapsed);
+    if(secs>0){m.reciteTimes=m.reciteTimes||[];m.reciteTimes.push({date:today(),seconds:secs});
+      // also count recitation time as study
+      m.log.push({date:today(),minutes:Math.max(1,Math.round(secs/60))});}
+    delete timers[m.id];
+    render();
+  } else {
+    timers[m.id]={start:performance.now(),elapsed:0};
+    const disp=document.getElementById("t_"+m.id);
+    btn.textContent="■ 停止并记录";
+    const tick=()=>{const t2=timers[m.id];if(!t2)return;
+      t2.elapsed=(performance.now()-t2.start)/1000;
+      if(disp)disp.textContent=fmt(Math.floor(t2.elapsed));
+      t2.raf=requestAnimationFrame(tick);};
+    tick();
+  }
+}
+
+/* ---------------- audio storage (IndexedDB) + player ---------------- */
+let _db=null, _idbOK=(typeof indexedDB!=="undefined");
+function idb(){return new Promise((res,rej)=>{
+  if(_db)return res(_db);
+  if(!_idbOK)return rej("no-idb");
+  const r=indexedDB.open("kenliao_audio",1);
+  r.onupgradeneeded=()=>{r.result.createObjectStore("files");};
+  r.onsuccess=()=>{_db=r.result;res(_db);};
+  r.onerror=()=>rej(r.error);
+});}
+function idbPut(k,v){return idb().then(db=>new Promise((res,rej)=>{
+  const t=db.transaction("files","readwrite");t.objectStore("files").put(v,k);
+  t.oncomplete=()=>res();t.onerror=()=>rej(t.error);}));}
+function idbGet(k){return idb().then(db=>new Promise((res,rej)=>{
+  const t=db.transaction("files","readonly");const rq=t.objectStore("files").get(k);
+  rq.onsuccess=()=>res(rq.result);rq.onerror=()=>rej(rq.error);})).catch(()=>null);}
+function idbDel(k){return idb().then(db=>new Promise((res)=>{
+  const t=db.transaction("files","readwrite");t.objectStore("files").delete(k);
+  t.oncomplete=()=>res();})).catch(()=>{});}
+
+const audioURLCache={};       // id -> objectURL (persisted blobs via IDB)
+const sessionBlobs={};        // id -> objectURL (fallback when IDB unavailable)
+function getAudioURL(id){
+  if(audioURLCache[id])return Promise.resolve(audioURLCache[id]);
+  if(sessionBlobs[id])return Promise.resolve(sessionBlobs[id]);
+  return idbGet(id).then(rec=>{
+    if(rec&&rec.blob){const u=URL.createObjectURL(rec.blob);audioURLCache[id]=u;return u;}
+    return null;
+  });
+}
+
+function buildPlayer(m,wrap){
+  const box=el("div","player");
+  const hasFile=!!m.audioName;
+
+  if(!hasFile){
+    box.classList.add("player-empty");
+    box.innerHTML='<div class="lbl">🎧 载入本地音频，就能在这里边听边听写</div>';
+    const label=el("label","filebtn");label.innerHTML="⬆ 选择音频文件";
+    const inp=el("input");inp.type="file";inp.accept="audio/*";inp.style.display="none";
+    inp.onchange=()=>handleFile(m,inp.files[0]);
+    label.appendChild(inp);
+    box.appendChild(label);
+    box.appendChild(el("div","player-hint",
+      '⚠ 本卡片的内嵌浏览器<b>不支持 MP3</b>，请载入 <b>OGG / WAV / Opus</b> 格式。<br>把 NPR 音频下载后，若是 mp3，可让我帮你转成 ogg，再从这里选择本地文件。文件存在本机，下次打开还在。'));
+    return box;
+  }
+
+  // has file -> player: native <audio controls> for reliable playback + method-specific extras
+  const audio=el("audio");audio.controls=true;audio.preload="metadata";audio.loop=!!m._loop;
+  audio.style.width="100%";audio.style.marginBottom="2px";
+  box.appendChild(audio);
+
+  const status=el("div","player-hint");status.style.marginTop="6px";status.textContent="载入中…";
+  box.appendChild(status);
+
+  const rate0=m._rate||1;
+
+  // extras: back 5s + loop
+  const row=el("div","pl-row");row.style.marginTop="10px";
+  const back=el("button","pl-btn sm","⟲5");back.title="后退 5 秒";
+  const loop=el("button","pl-btn sm"+(m._loop?" on":""),"🔁");loop.title="循环播放";
+  row.appendChild(back);row.appendChild(loop);
+  box.appendChild(row);
+
+  // speeds
+  const spRow=el("div","pl-speeds");
+  spRow.appendChild(el("span","slbl","语速"));
+  [0.5,0.75,1,1.25].forEach(r=>{
+    const b=el("button","spd"+(r===rate0?" on":""),(r===1?"1.0×":r+"×"));
+    b.onclick=()=>{audio.playbackRate=r;m._rate=r;spRow.querySelectorAll(".spd").forEach(x=>x.classList.remove("on"));b.classList.add("on");};
+    spRow.appendChild(b);
+  });
+  box.appendChild(spRow);
+
+  // filename + change/remove
+  const nameRow=el("div","pl-row");nameRow.style.marginTop="8px";
+  nameRow.appendChild(el("div","pl-name","♪ "+escapeHtml(m.audioName)));
+  const chgInp=el("input");chgInp.type="file";chgInp.accept="audio/*";chgInp.style.display="none";
+  chgInp.onchange=()=>handleFile(m,chgInp.files[0]);
+  const chg=el("button","pl-chg","更换");chg.onclick=()=>chgInp.click();
+  const rm=el("button","pl-chg","移除");rm.style.marginLeft="10px";
+  rm.onclick=()=>{if(confirm("移除当前音频？（不影响文稿和进度）"))removeAudio(m);};
+  nameRow.appendChild(chgInp);nameRow.appendChild(chg);nameRow.appendChild(rm);
+  box.appendChild(nameRow);
+
+  // wire up
+  back.onclick=()=>{audio.currentTime=Math.max(0,audio.currentTime-5);};
+  loop.onclick=()=>{m._loop=!m._loop;audio.loop=m._loop;loop.classList.toggle("on",m._loop);};
+  audio.addEventListener("loadedmetadata",()=>{
+    status.textContent="就绪 · 时长 "+fmt(Math.floor(audio.duration||0));
+    if(!m.durSec&&audio.duration){m.durSec=Math.round(audio.duration);save();}
+  });
+  audio.addEventListener("canplay",()=>{status.textContent="就绪 · 可以播放 ▶";});
+  audio.addEventListener("error",()=>{
+    const codes={1:"加载被中断",2:"网络错误",3:"解码失败（编码不支持）",4:"格式不支持"};
+    const c=audio.error?audio.error.code:0;
+    status.innerHTML='⚠ 播放失败：'+(codes[c]||"未知错误")+'。若文件是 m4a/aac/wma，请转成 <b>mp3</b> 或 <b>wav</b> 后重新载入。';
+  });
+  getAudioURL(m.id).then(url=>{
+    if(!url){status.innerHTML='⚠ 音频未能载入（可能被浏览器清理）。点『更换』重新选择文件。';return;}
+    audio.src=url;audio.playbackRate=rate0;audio.load();
+  }).catch(()=>{status.innerHTML='⚠ 读取本机存储失败。点『更换』重新选择文件。';});
+  return box;
+}
+
+function handleFile(m,f){
+  if(!f)return;
+  m.audioName=f.name;m.audioType=f.type;
+  if(audioURLCache[m.id]){URL.revokeObjectURL(audioURLCache[m.id]);delete audioURLCache[m.id];}
+  if(sessionBlobs[m.id]){URL.revokeObjectURL(sessionBlobs[m.id]);delete sessionBlobs[m.id];}
+  const finish=()=>{save();render();};
+  idbPut(m.id,{blob:f,name:f.name}).then(finish).catch(()=>{
+    // IDB failed -> session-only fallback
+    sessionBlobs[m.id]=URL.createObjectURL(f);finish();
+  });
+}
+function removeAudio(m){
+  if(audioURLCache[m.id]){URL.revokeObjectURL(audioURLCache[m.id]);delete audioURLCache[m.id];}
+  if(sessionBlobs[m.id]){URL.revokeObjectURL(sessionBlobs[m.id]);delete sessionBlobs[m.id];}
+  idbDel(m.id);m.audioName=null;m.audioType=null;save();render();
+}
+
+/* ---------------- charts ---------------- */
+function renderCharts(){
+  const done=state.materials.filter(isDone).length;
+  const inprog=state.materials.filter(m=>!isDone(m)&&stepsDone(m)>0).length;
+  const goal=state.settings.goal;
+  const remaining=Math.max(0, goal-done-inprog);
+  const started=state.materials.length;
+  const notyet=Math.max(0, goal-Math.max(started,done+inprog));
+
+  const jData=[done, inprog, notyet];
+  $("#journeyLegend").innerHTML='<span style="color:#CC0000">■</span> 已上线 &nbsp; <span style="color:#F09A9A">■</span> 进行中 &nbsp; <span style="color:#E2E2E2">■</span> 待开始';
+
+  if(!journeyChart){
+    journeyChart=new Chart($("#journeyChart"),{
+      type:"doughnut",
+      data:{labels:["已上线","进行中","待开始"],
+        datasets:[{data:jData,backgroundColor:["#CC0000","#F09A9A","#E2E2E2"],borderWidth:2,borderColor:"#fff"}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:"64%",
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:c=>c.label+"："+c.parsed+" 篇"}}}}
+    });
+    // center text plugin via afterDraw
+  }else{journeyChart.data.datasets[0].data=jData;journeyChart.update();}
+
+  // minutes last 14 days
+  const labels=[],vals=[];
+  const byDate={};state.materials.forEach(m=>m.log.forEach(l=>{byDate[l.date]=(byDate[l.date]||0)+l.minutes;}));
+  for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=dateStr(d);
+    labels.push((d.getMonth()+1)+"/"+d.getDate());vals.push(byDate[ds]||0);}
+  if(!minutesChart){
+    minutesChart=new Chart($("#minutesChart"),{
+      type:"bar",
+      data:{labels,datasets:[{data:vals,backgroundColor:"#CC0000",borderRadius:2,maxBarThickness:16}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+" 分钟"}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:10},color:"#8b8f88",maxRotation:0,autoSkip:true,maxTicksLimit:7}},
+          y:{beginAtZero:true,grid:{color:"#EFEFEF"},ticks:{font:{size:10},color:"#8b8f88",precision:0}}}}
+    });
+  }else{minutesChart.data.labels=labels;minutesChart.data.datasets[0].data=vals;minutesChart.update();}
+}
+
+/* ---------------- modal / add ---------------- */
+function openModal(){
+  $("#levelTip").innerHTML=LEVEL_TIPS[state.settings.level]||LEVEL_TIPS.beginner;
+  ["fTitle","fNpr","fAudio","fDur","fText"].forEach(id=>$("#"+id).value="");
+  $("#modalBg").classList.add("show");$("#fTitle").focus();
+}
+function closeModal(){$("#modalBg").classList.remove("show");}
+$("#addBtn").onclick=openModal;
+/* export / import progress (for moving between computers) */
+$("#exportBtn").onclick=()=>{
+  const data=JSON.stringify(state,(k,v)=>k==="_open"?undefined:v,2);
+  const blob=new Blob([data],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="啃料电台-进度备份-"+today()+".json";
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+};
+$("#importBtn").onclick=()=>$("#importFile").click();
+$("#importFile").onchange=()=>{
+  const f=$("#importFile").files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const obj=JSON.parse(r.result);
+      if(!obj||!Array.isArray(obj.materials))throw new Error("bad");
+      if(!confirm("导入将覆盖当前设备上的进度（音频文件不含在内，需在本机重新载入）。确定继续？")){$("#importFile").value="";return;}
+      state=obj;
+      if(!state.settings)state.settings={goal:10,level:"beginner"};
+      state.materials.forEach(m=>{m._open=false;});
+      save();render();
+      alert("导入成功！共 "+state.materials.length+" 档材料。音频请在本机各档里重新载入。");
+    }catch(e){alert("无法识别该文件，请选择本 app 导出的 .json 备份。");}
+    $("#importFile").value="";
+  };
+  r.readAsText(f);
+};
+$("#cancelBtn").onclick=closeModal;
+$("#modalBg").onclick=e=>{if(e.target===$("#modalBg"))closeModal();};
+$("#copyNpr").onclick=()=>{
+  const txt="https://www.npr.org";const btn=$("#copyNpr");
+  const done=()=>{btn.textContent="已复制 ✓";setTimeout(()=>btn.textContent="复制",1500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done));
+  }else{fallbackCopy(txt,done);}
+};
+function fallbackCopy(txt,cb){
+  try{const ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";
+    document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);cb&&cb();}
+  catch(e){/* worst case: user selects the mono text manually */}
+}
+$("#saveBtn").onclick=()=>{
+  const title=$("#fTitle").value.trim();
+  if(!title){$("#fTitle").focus();$("#fTitle").style.borderColor="var(--air)";return;}
+  const m={id:uid(),title,nprUrl:$("#fNpr").value.trim(),audioUrl:$("#fAudio").value.trim(),
+    durSec:parseDur($("#fDur").value),transcript:$("#fText").value.trim(),
+    createdAt:today(),steps:{select:true,dictation:false,recite:false,speed:false},
+    reciteTimes:[],reciteDate:null,lastReviewAt:null,reviewCount:0,log:[],notes:"",_open:true};
+  state.materials.unshift(m);closeModal();render();
+};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+
+/* ---------------- utils ---------------- */
+function escapeHtml(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function escapeAttr(s){return escapeHtml(s);}
+
+/* ---------------- boot ---------------- */
+render();
+</script>
+</body>
+</html>
