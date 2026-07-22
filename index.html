@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>啃料 10 · NPR 英语精修</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<!-- Firebase (登录 + 云同步)。GitHub Pages 上正常加载；在 Cowork 卡片沙盒中会被拦截，此时 app 自动降级为仅本机模式。 -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <style>
   :root{
     color-scheme: light;
@@ -50,6 +55,14 @@
     letter-spacing:.08em;padding:5px 11px;border-radius:2px;white-space:nowrap;}
   .live .dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1.4s steps(1) infinite;}
   @keyframes blink{50%{opacity:.25}}
+  .authwrap{display:flex;align-items:center;gap:8px;}
+  .authbtn{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;border:none;border-radius:2px;padding:6px 11px;background:#fff;color:var(--ink);cursor:pointer;}
+  .authbtn:hover{background:#e9e9e9;}
+  .authbtn.ghost{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;}
+  .who{font-size:11.5px;color:#c9c9c9;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
+  .synced{font-size:10px;color:#8a8a8a;font-weight:700;letter-spacing:.04em;text-transform:uppercase;min-height:12px;}
+  .synced.ok{color:#5cc98a;}
+  .synced.err{color:#ff8080;}
 
   /* season progress bar */
   .season{background:var(--ink-2);color:#fff;display:flex;align-items:center;gap:14px;padding:12px 20px;flex-wrap:wrap;}
@@ -152,6 +165,63 @@
   .field textarea{resize:vertical;min-height:70px;line-height:1.6;}
   .field input:focus,.field textarea:focus{outline:none;border-color:var(--red);}
   .transcript{font-size:15px;line-height:1.85;background:#FAFAFA;border:1px solid var(--line);border-left:3px solid var(--red);border-radius:3px;padding:14px 16px;white-space:pre-wrap;max-height:280px;overflow:auto;margin-top:8px;}
+  .transcript .w{cursor:pointer;border-radius:3px;padding:0 1px;transition:background .12s;}
+  .transcript .w:hover{background:var(--red-soft);color:var(--red);}
+  .tsec{margin-top:16px;}
+  .tlock{border:1px dashed var(--line);border-radius:4px;background:#FAFAFA;padding:20px 16px;text-align:center;}
+  .tlock-ic{font-size:26px;}
+  .tlock-t{font-weight:800;font-size:13.5px;margin-top:6px;text-transform:uppercase;letter-spacing:.05em;}
+  .tlock-d{font-size:12.5px;color:var(--gray-2);margin-top:5px;font-weight:600;line-height:1.6;}
+  .tlock-btn{margin-top:12px;border:none;background:var(--ink);color:#fff;font-weight:800;text-transform:uppercase;font-size:12.5px;padding:9px 18px;border-radius:3px;cursor:pointer;}
+  .tlock-btn:hover{background:var(--red);}
+  .tunlock-bar{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:800;color:var(--gray);margin-bottom:7px;}
+  .tlock-relock{border:1px solid var(--line);background:var(--card);color:var(--gray);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:4px 11px;border-radius:3px;cursor:pointer;}
+  .tlock-relock:hover{border-color:var(--red);color:var(--red);}
+  /* vocab / lookup */
+  .vocab{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;}
+  .vocab-title{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);margin-bottom:8px;}
+  .vocab-search{display:flex;gap:8px;}
+  .vocab-search input{flex:1;border:1px solid var(--line);border-radius:3px;padding:8px 11px;font-size:14px;background:var(--card);color:var(--ink);}
+  .vocab-search input:focus{outline:none;border-color:var(--red);}
+  .vocab-search button{border:none;background:var(--red);color:#fff;font-weight:800;text-transform:uppercase;font-size:12px;padding:0 16px;border-radius:3px;cursor:pointer;}
+  .vocab-search button:hover{background:var(--red-d);}
+  .vocab-search .guessbtn{background:var(--ink);}
+  .vocab-search .guessbtn:hover{background:#333;}
+  .vocab-hint{font-size:11.5px;color:var(--gray-2);margin-top:6px;font-weight:600;}
+  .suggests{margin-top:9px;}
+  .suggests:empty{display:none;}
+  .suggest-lbl{font-size:12px;color:var(--gray);font-weight:700;margin-bottom:7px;}
+  .sugchips{display:flex;flex-wrap:wrap;gap:6px;}
+  .sugchip{border:1.5px solid var(--ink);background:var(--card);color:var(--ink);border-radius:100px;padding:5px 13px;font-size:13.5px;font-weight:700;cursor:pointer;}
+  .sugchip:hover{background:var(--red);border-color:var(--red);color:#fff;}
+  .lookup-result{margin-top:10px;}
+  .lookup-result:empty{display:none;}
+  .rescard{background:#FAFAFA;border:1px solid var(--line);border-left:3px solid var(--red);border-radius:3px;padding:11px 13px;}
+  .rescard .rw{font-size:16px;font-weight:800;}
+  .rescard .rph{font-family:var(--mono);font-size:12px;color:var(--gray);margin-left:8px;font-weight:600;}
+  .rescard .rpos{font-size:10.5px;font-weight:800;color:var(--red);text-transform:uppercase;margin-top:6px;letter-spacing:.04em;}
+  .rescard .rcn{font-size:15.5px;font-weight:800;color:var(--ink);margin-top:6px;line-height:1.4;}
+  .rescard .rdef{font-size:12.5px;color:var(--gray);margin-top:3px;}
+  .rescard .rex{font-size:12.5px;color:var(--gray);font-style:italic;margin-top:4px;}
+  .rescard .rrow{display:flex;gap:12px;align-items:center;margin-top:9px;flex-wrap:wrap;}
+  .say{border:none;background:var(--ink);color:#fff;border-radius:50%;width:28px;height:28px;font-size:11px;cursor:pointer;flex-shrink:0;}
+  .say:hover{background:#333;}
+  .saybtn{border:none;background:var(--ink);color:#fff;border-radius:100px;padding:6px 14px;font-size:12.5px;font-weight:800;cursor:pointer;}
+  .saybtn:hover{background:#333;}
+  .ydlink{font-size:12px;font-weight:800;color:var(--red);}
+  .savedtag{font-size:11px;color:#2e8b57;font-weight:700;}
+  .vocab-head{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--ink);margin:14px 0 8px;}
+  .vocab-list{display:flex;flex-direction:column;gap:6px;}
+  .vocab-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--line);border-radius:3px;background:var(--card);}
+  .vocab-item.mastered{opacity:.5;}
+  .vocab-item .vw{font-weight:800;font-size:13.5px;flex-shrink:0;}
+  .vocab-item .vph{font-family:var(--mono);font-size:11px;color:var(--gray-2);flex-shrink:0;}
+  .vocab-item .vd{flex:1;min-width:0;font-size:12px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .vocab-item .vbtn{border:none;background:transparent;cursor:pointer;font-size:11.5px;color:var(--gray-2);padding:2px 3px;text-decoration:none;flex-shrink:0;}
+  .vocab-item .vbtn:hover{color:var(--red);}
+  .vocab-item .vbtn.ok{color:#2e8b57;}
+  .vocab-empty{font-size:12.5px;color:var(--gray-2);padding:8px 0;font-weight:500;}
+  .lookup-pop{position:absolute;z-index:80;background:#fff;border:1px solid var(--ink);border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.28);padding:11px 13px;}
   .disclosure{margin-top:14px;}
   .disclosure summary{cursor:pointer;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--red);list-style:none;}
   .disclosure summary::-webkit-details-marker{display:none;}
@@ -200,6 +270,7 @@
   .log-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;}
   .log-row input{width:82px;border:1px solid var(--line);border-radius:3px;padding:7px 9px;font-family:var(--mono);}
   .chip{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;background:var(--red-soft);color:var(--red);padding:4px 9px;border-radius:2px;}
+  .study-time{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--ink);min-width:52px;}
   .del{margin-left:auto;background:transparent;border:none;color:var(--gray-2);font-size:12px;text-decoration:underline;font-weight:600;}
   .del:hover{color:var(--red);}
 
@@ -238,6 +309,8 @@
   </div>
   <div class="mh-right">
     <div class="live"><span class="dot"></span>LIVE · <span id="onairCount">0</span> 篇进行中</div>
+    <div class="authwrap" id="authArea"></div>
+    <div class="synced" id="syncStatus"></div>
   </div>
 </div>
 <div class="season">
@@ -342,7 +415,8 @@ function load(){
   try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.materials)return s;}catch(e){}
   return {materials:[], settings:{goal:10, level:"beginner"}, ver:1};
 }
-function save(){localStorage.setItem(KEY, JSON.stringify(state));}
+function saveLocalOnly(){try{localStorage.setItem(KEY, JSON.stringify(state, skipRuntime));}catch(e){}}
+function save(){state.updatedAt=Date.now();saveLocalOnly();schedulePush();}
 let state = load();
 
 /* ---------------- helpers ---------------- */
@@ -476,6 +550,7 @@ function trackEl(m,i){
     (m.audioName?('<span>🎧 音频已载入</span>'):'') +
     (m.nprUrl?('<span><a href="'+escapeAttr(m.nprUrl)+'" target="_blank" rel="noopener">NPR 原文 ↗</a></span>'):'') +
     (m.audioUrl?('<span><a href="'+escapeAttr(m.audioUrl)+'" target="_blank" rel="noopener">音频页 ↗</a></span>'):'') +
+    (m.vocab&&m.vocab.length?('<span>📖 '+m.vocab.length+' 生词</span>'):'') +
     '<span>已投入 '+m.log.reduce((s,l)=>s+l.minutes,0)+' 分钟</span>';
   main.appendChild(meta);
   head.appendChild(main);
@@ -521,22 +596,21 @@ function buildBody(m,wrap,body){
   // ---- tempo / recitation timer ----
   body.appendChild(tempoEl(m));
 
-  // ---- study log ----
+  // ---- 学习计时（手动开始/结束，计入累计学习）----
   const log=el("div","log-row");
-  log.innerHTML='<span class="chip">记录今日学习</span>';
-  const inp=el("input");inp.type="number";inp.min="1";inp.placeholder="分钟";inp.className="mono";
-  const addLog=el("button","btn-mini","+ 记入");
-  addLog.onclick=()=>{const v=parseInt(inp.value,10);if(!v||v<=0)return;
-    m.log.push({date:today(),minutes:v});inp.value="";
-    save();renderHeader();renderStats();renderCharts();
-    const meta=wrap.querySelector(".track-meta");
-    if(meta)meta.lastElementChild.textContent='已投入 '+m.log.reduce((s,l)=>s+l.minutes,0)+' 分钟';};
-  log.appendChild(inp);log.appendChild(addLog);
+  log.appendChild(el("span","chip","学习计时"));
+  const stDisp=el("span","study-time");stDisp.id="st_"+m.id;
+  const stRun=studyTimers[m.id];
+  stDisp.textContent=stRun?fmt(Math.floor(stRun.elapsed||0)):"00:00";
+  const stBtn=el("button","btn-mini");stBtn.textContent=stRun?"■ 结束并记录":"▶ 开始学习";
+  stBtn.onclick=()=>toggleStudy(m,wrap,stBtn);
+  log.appendChild(stDisp);log.appendChild(stBtn);
   const del=el("button","del","删除这档");
   del.onclick=()=>{if(confirm("确定删除「"+m.title+"」？此操作无法撤销。")){
-    if(audioURLCache[m.id]){URL.revokeObjectURL(audioURLCache[m.id]);delete audioURLCache[m.id];}
+    const u=audioURLCache[m.id];if(u&&u.indexOf("blob:")===0)URL.revokeObjectURL(u);delete audioURLCache[m.id];
     idbDel(m.id);
-    state.materials=state.materials.filter(x=>x!==m);render();}};
+    if(m.audioCloud&&fb.ok&&fb.user&&fb.storage){try{fb.storage.ref("audio/"+fb.user.uid+"/"+m.id).delete().catch(()=>{});}catch(e){}}
+    state.materials=state.materials.filter(x=>x!==m);save();render();}};
   log.appendChild(del);
   body.appendChild(log);
 
@@ -548,17 +622,48 @@ function buildBody(m,wrap,body){
   notes.appendChild(ta);
   body.appendChild(notes);
 
-  // ---- transcript ----
+  // ---- 查词 & 生词本 ----
+  body.appendChild(buildVocab(m));
+
+  // ---- transcript（默认上锁：先听写，后对照）----
   if(m.transcript){
-    const dis=el("details","disclosure");
-    dis.appendChild(el("summary",null,"查看文稿 Transcript"));
-    dis.appendChild(el("div","transcript",escapeHtml(m.transcript)));
-    body.appendChild(dis);
+    const sec=el("div","tsec");
+    sec.appendChild(el("div","vocab-title","文稿 Transcript"));
+    const inner=el("div");
+    renderTranscriptSection(m,inner);
+    sec.appendChild(inner);
+    body.appendChild(sec);
   }
 }
 
 /* recitation timer + tempo meter */
 const timers={}; // id -> {start, raf, elapsed}
+const studyTimers={}; // id -> {start, raf, elapsed}  学习计时（手动开始/结束）
+function toggleStudy(m,wrap,btn){
+  const t=studyTimers[m.id];
+  if(t){ // 结束并记录
+    cancelAnimationFrame(t.raf);
+    const secs=Math.round(t.elapsed);
+    delete studyTimers[m.id];
+    if(secs>=1){
+      const mins=Math.max(1,Math.round(secs/60));
+      m.log.push({date:today(),minutes:mins});
+      save();renderHeader();renderStats();renderCharts();
+      const meta=wrap.querySelector(".track-meta");
+      if(meta&&meta.lastElementChild)meta.lastElementChild.textContent='已投入 '+m.log.reduce((s,l)=>s+l.minutes,0)+' 分钟';
+    }
+    const d=document.getElementById("st_"+m.id);if(d)d.textContent="00:00";
+    if(btn)btn.textContent="▶ 开始学习";
+  }else{ // 开始
+    studyTimers[m.id]={start:performance.now(),elapsed:0};
+    if(btn)btn.textContent="■ 结束并记录";
+    const tick=()=>{const t2=studyTimers[m.id];if(!t2)return;
+      t2.elapsed=(performance.now()-t2.start)/1000;
+      const d=document.getElementById("st_"+m.id);if(d)d.textContent=fmt(Math.floor(t2.elapsed));
+      t2.raf=requestAnimationFrame(tick);};
+    tick();
+  }
+}
 function tempoEl(m){
   const box=el("div","tempo");
   const top=el("div","tempo-top");
@@ -655,8 +760,15 @@ function getAudioURL(id){
   if(sessionBlobs[id])return Promise.resolve(sessionBlobs[id]);
   return idbGet(id).then(rec=>{
     if(rec&&rec.blob){const u=URL.createObjectURL(rec.blob);audioURLCache[id]=u;return u;}
-    return null;
-  });
+    return cloudAudioURL(id);   // not local -> try cloud (synced from another device)
+  }).catch(()=>cloudAudioURL(id));
+}
+function cloudAudioURL(id){
+  const m=state.materials.find(x=>x.id===id);
+  if(!m||!m.audioCloud||!fb.ok||!fb.user||!fb.storage)return null;
+  return fb.storage.ref("audio/"+fb.user.uid+"/"+id).getDownloadURL()
+    .then(url=>{audioURLCache[id]=url;return url;})   // https URL streams directly
+    .catch(()=>null);
 }
 
 function buildPlayer(m,wrap){
@@ -713,8 +825,12 @@ function buildPlayer(m,wrap){
   rm.onclick=()=>{if(confirm("移除当前音频？（不影响文稿和进度）"))removeAudio(m);};
   nameRow.appendChild(chgInp);nameRow.appendChild(chg);nameRow.appendChild(rm);
   box.appendChild(nameRow);
+  box.appendChild(el("div","player-hint","⌨ 空格 播放/暂停 · ←/→ 后退/前进 5 秒（先点一下播放器以选中）"));
 
   // wire up
+  currentAudio=audio;                                       // 新展开的播放器即为当前
+  audio.addEventListener("play",()=>{currentAudio=audio;});
+  box.addEventListener("pointerdown",()=>{currentAudio=audio;},true);
   back.onclick=()=>{audio.currentTime=Math.max(0,audio.currentTime-5);};
   loop.onclick=()=>{m._loop=!m._loop;audio.loop=m._loop;loop.classList.toggle("on",m._loop);};
   audio.addEventListener("loadedmetadata",()=>{
@@ -725,7 +841,7 @@ function buildPlayer(m,wrap){
   audio.addEventListener("error",()=>{
     const codes={1:"加载被中断",2:"网络错误",3:"解码失败（编码不支持）",4:"格式不支持"};
     const c=audio.error?audio.error.code:0;
-    status.innerHTML='⚠ 播放失败：'+(codes[c]||"未知错误")+'。若文件是 m4a/aac/wma，请转成 <b>mp3</b> 或 <b>wav</b> 后重新载入。';
+    status.innerHTML='⚠ 播放失败：'+(codes[c]||"未知错误")+'。请载入 <b>OGG / WAV / Opus</b> 格式（内嵌浏览器不支持 MP3）。是 mp3 就发我帮你转成 ogg。';
   });
   getAudioURL(m.id).then(url=>{
     if(!url){status.innerHTML='⚠ 音频未能载入（可能被浏览器清理）。点『更换』重新选择文件。';return;}
@@ -736,19 +852,227 @@ function buildPlayer(m,wrap){
 
 function handleFile(m,f){
   if(!f)return;
-  m.audioName=f.name;m.audioType=f.type;
-  if(audioURLCache[m.id]){URL.revokeObjectURL(audioURLCache[m.id]);delete audioURLCache[m.id];}
+  m.audioName=f.name;m.audioType=f.type;m.audioCloud=false;
+  if(audioURLCache[m.id]){const u=audioURLCache[m.id];if(u&&u.indexOf("blob:")===0)URL.revokeObjectURL(u);delete audioURLCache[m.id];}
   if(sessionBlobs[m.id]){URL.revokeObjectURL(sessionBlobs[m.id]);delete sessionBlobs[m.id];}
-  const finish=()=>{save();render();};
+  const finish=()=>{save();render();cloudUploadAudio(m,f);};
   idbPut(m.id,{blob:f,name:f.name}).then(finish).catch(()=>{
     // IDB failed -> session-only fallback
     sessionBlobs[m.id]=URL.createObjectURL(f);finish();
   });
 }
+function cloudUploadAudio(m,f){
+  if(!fb.ok||!fb.user||!fb.storage)return;
+  try{
+    setSyncUI("saving");
+    fb.storage.ref("audio/"+fb.user.uid+"/"+m.id).put(f)
+      .then(()=>{m.audioCloud=true;m.audioType=f.type;save();setSyncUI("synced");})
+      .catch(e=>{console.warn("audio upload failed",e);setSyncUI("error");});
+  }catch(e){console.warn(e);}
+}
 function removeAudio(m){
-  if(audioURLCache[m.id]){URL.revokeObjectURL(audioURLCache[m.id]);delete audioURLCache[m.id];}
+  const u=audioURLCache[m.id];if(u&&u.indexOf("blob:")===0)URL.revokeObjectURL(u);delete audioURLCache[m.id];
   if(sessionBlobs[m.id]){URL.revokeObjectURL(sessionBlobs[m.id]);delete sessionBlobs[m.id];}
-  idbDel(m.id);m.audioName=null;m.audioType=null;save();render();
+  idbDel(m.id);
+  if(m.audioCloud&&fb.ok&&fb.user&&fb.storage){try{fb.storage.ref("audio/"+fb.user.uid+"/"+m.id).delete().catch(()=>{});}catch(e){}}
+  m.audioName=null;m.audioType=null;m.audioCloud=false;save();render();
+}
+
+/* ---------------- 查词 + 生词本 ---------------- */
+function youdaoURL(w){return "https://www.youdao.com/result?word="+encodeURIComponent(w)+"&lang=en";}
+function normWord(s){return (s||"").trim().toLowerCase().replace(/[^a-z'’-]+/g,"").replace(/^['’-]+|['’-]+$/g,"");}
+
+function buildVocab(m){
+  m.vocab=m.vocab||[];
+  const box=el("div","vocab");
+  box.appendChild(el("div","vocab-title","查词 & 生词本"));
+  const sr=el("div","vocab-search");
+  const inp=el("input");inp.type="text";inp.placeholder="输入单词，或你听到的大致拼法…";
+  const btn=el("button",null,"查词");
+  const gbtn=el("button","guessbtn","🔤 猜词");
+  const go=()=>{const w=inp.value;if(w.trim())lookupWord(m,w,null);};
+  const guess=()=>{const w=inp.value;if(w.trim())suggestWords(m,w);};
+  btn.onclick=go;gbtn.onclick=guess;
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();go();}});
+  sr.appendChild(inp);sr.appendChild(btn);sr.appendChild(gbtn);box.appendChild(sr);
+  box.appendChild(el("div","vocab-hint","🎧 听写时拼不准？把你听到的大致拼法打进去，点「猜词」按发音推荐相近的正确单词。"));
+  const sg=el("div","suggests");sg.id="sg_"+m.id;box.appendChild(sg);
+  const lk=el("div","lookup-result");lk.id="lk_"+m.id;box.appendChild(lk);
+  const vh=el("div","vocab-head");vh.innerHTML='本篇生词本（<span id="vc_'+m.id+'">'+m.vocab.length+'</span>）';box.appendChild(vh);
+  const vl=el("div","vocab-list");vl.id="vl_"+m.id;box.appendChild(vl);
+  setTimeout(()=>renderVocabList(m),0);
+  return box;
+}
+function renderVocabList(m){
+  const vl=document.getElementById("vl_"+m.id);if(!vl)return;
+  const vc=document.getElementById("vc_"+m.id);if(vc)vc.textContent=(m.vocab||[]).length;
+  vl.innerHTML="";
+  if(!m.vocab||m.vocab.length===0){vl.appendChild(el("div","vocab-empty","还没有生词。点文稿里的单词、或用上面搜索框查词，会自动记到这里。"));return;}
+  m.vocab.forEach(v=>{
+    const it=el("div","vocab-item"+(v.mastered?" mastered":""));
+    const w=el("span","vw",escapeHtml(v.w));w.style.cursor="pointer";w.title="重新查询";w.onclick=()=>lookupWord(m,v.w,w);
+    it.appendChild(w);
+    if(v.phonetic)it.appendChild(el("span","vph",escapeHtml(v.phonetic)));
+    it.appendChild(el("span","vd",escapeHtml(v.def||v.note||"—")));
+    const s=el("button","vbtn","🔊");s.title="发音";s.onclick=()=>sayWord(v);it.appendChild(s);
+    const yd=el("a","vbtn");yd.textContent="有道↗";yd.href=youdaoURL(v.w);yd.target="_blank";yd.rel="noopener";it.appendChild(yd);
+    const mk=el("button","vbtn"+(v.mastered?" ok":""),v.mastered?"✓已掌握":"掌握");mk.onclick=()=>{v.mastered=!v.mastered;save();renderVocabList(m);};it.appendChild(mk);
+    const del=el("button","vbtn","×");del.title="删除";del.onclick=()=>{m.vocab=m.vocab.filter(x=>x!==v);save();renderVocabList(m);};it.appendChild(del);
+    vl.appendChild(it);
+  });
+}
+function playSay(url){try{const a=new Audio(url);a.play().catch(()=>{});}catch(e){}}
+function speakTTS(w){try{if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(w);u.lang="en-US";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u);}}catch(e){}}
+function sayWord(entry){
+  const w=(entry&&entry.w)||"";
+  if(entry&&entry.audio){try{const a=new Audio(entry.audio);a.play().catch(()=>speakTTS(w));return;}catch(e){}}
+  speakTTS(w);
+}
+function lookupWord(m,raw,anchor){
+  const w=normWord(raw);if(!w)return;
+  m.vocab=m.vocab||[];
+  const sg0=document.getElementById("sg_"+m.id);if(sg0)sg0.innerHTML="";
+  let entry=m.vocab.find(v=>v.w===w)||{w:w,phonetic:"",def:"",ex:"",audio:"",pos:"",date:today(),mastered:false,note:""};
+  renderResult(m,entry,"loading",anchor);
+  fetchDef(w).then(res=>{
+    if(res){
+      if(!entry.phonetic)entry.phonetic=res.phonetic||"";
+      if(res.meanings[0]){if(!entry.def)entry.def=res.meanings[0].def||"";if(!entry.ex)entry.ex=res.meanings[0].ex||"";if(!entry.pos)entry.pos=res.meanings[0].pos||"";}
+      if(!entry.audio)entry.audio=res.audio||"";
+      if(!m.vocab.find(v=>v.w===w))m.vocab.unshift(entry);   // 确认是真实单词后才记入生词本
+      save();renderVocabList(m);renderResult(m,entry,"ok",anchor);
+    }else{
+      renderResult(m,entry,"fail",anchor);
+      suggestWords(m,w);                                     // 查不到 → 自动按发音推荐
+    }
+  });
+}
+function hasCJK(s){return /[\u4e00-\u9fff]/.test(s||"");}
+function fetchCN(word){   // 英译中（MyMemory，免费、跨域、国内可访问）
+  return fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(word)+"&langpair=en|zh-CN")
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{const t=d&&d.responseData&&d.responseData.translatedText?String(d.responseData.translatedText).trim():"";return hasCJK(t)?t:"";})
+    .catch(()=>"");
+}
+function fetchDef(word){
+  return fetch("https://api.dictionaryapi.dev/api/v2/entries/en/"+encodeURIComponent(word))
+    .then(r=>r.ok?r.json():null).then(data=>{
+      if(!Array.isArray(data)||!data[0])return null;
+      const e=data[0];let phonetic=e.phonetic||"",audio="";
+      (e.phonetics||[]).forEach(p=>{if(!phonetic&&p.text)phonetic=p.text;if(!audio&&p.audio)audio=p.audio;});
+      const meanings=(e.meanings||[]).slice(0,2).map(mm=>({pos:mm.partOfSpeech||"",
+        def:(mm.definitions&&mm.definitions[0]&&mm.definitions[0].definition)||"",
+        ex:(mm.definitions&&mm.definitions[0]&&mm.definitions[0].example)||""}));
+      return {word:e.word||word,phonetic:phonetic,audio:audio,meanings:meanings};
+    }).catch(()=>null);
+}
+function resultCard(entry,state){
+  const c=el("div","rescard");
+  const head=el("div");
+  head.innerHTML='<span class="rw">'+escapeHtml(entry.w)+'</span>'+(entry.phonetic?'<span class="rph">'+escapeHtml(entry.phonetic)+'</span>':'');
+  c.appendChild(head);
+  if(state==="loading"){c.appendChild(el("div","rdef","查询中…"));}
+  else if(state==="fail"){c.appendChild(el("div","rdef","没查到该词，点『有道翻译』查看释义 ↗"));}
+  else{
+    if(entry.pos)c.appendChild(el("div","rpos",escapeHtml(entry.pos)));
+    if(entry.def)c.appendChild(el("div","rdef",escapeHtml(entry.def)));
+    if(entry.ex)c.appendChild(el("div","rex","“"+escapeHtml(entry.ex)+"”"));
+  }
+  const row=el("div","rrow");
+  const s=el("button","saybtn","🔊 发音");s.title="听发音，对照跟读";s.onclick=()=>sayWord(entry);row.appendChild(s);
+  const yd=el("a","ydlink");yd.textContent="有道翻译 ↗";yd.href=youdaoURL(entry.w);yd.target="_blank";yd.rel="noopener";row.appendChild(yd);
+  if(state==="ok")row.appendChild(el("span","savedtag","已记入生词本 ✓"));
+  c.appendChild(row);
+  return c;
+}
+let popEl=null,popWord=null;
+function ensurePop(){
+  if(popEl)return popEl;
+  popEl=el("div","lookup-pop");popEl.style.display="none";document.body.appendChild(popEl);
+  document.addEventListener("pointerdown",ev=>{
+    if(popEl&&popEl.style.display!=="none"&&!popEl.contains(ev.target)&&!(ev.target.classList&&ev.target.classList.contains("w")))hidePop();
+  },true);
+  window.addEventListener("scroll",hidePop,true);
+  return popEl;
+}
+function hidePop(){if(popEl)popEl.style.display="none";popWord=null;}
+function showPopAt(anchor,node){
+  const p=ensurePop();p.innerHTML="";p.appendChild(node);p.style.display="block";
+  const pw=Math.min(300,window.innerWidth-20);p.style.width=pw+"px";
+  const r=anchor.getBoundingClientRect();
+  let left=r.left+window.scrollX,top=r.bottom+window.scrollY+6;
+  const vwR=window.scrollX+window.innerWidth;
+  if(left+pw>vwR-10)left=vwR-pw-10;if(left<window.scrollX+8)left=window.scrollX+8;
+  p.style.left=left+"px";p.style.top=top+"px";
+}
+function renderResult(m,entry,state,anchor){
+  const lk=document.getElementById("lk_"+m.id);
+  if(lk){lk.innerHTML="";lk.appendChild(resultCard(entry,state));}
+  if(anchor){
+    if(state==="loading"){popWord=entry.w;showPopAt(anchor,resultCard(entry,state));}
+    else if(popEl&&popEl.style.display!=="none"&&popWord===entry.w){popEl.innerHTML="";popEl.appendChild(resultCard(entry,state));}
+  }
+}
+function renderTranscriptSection(m,box){
+  box.innerHTML="";
+  if(!m._unlocked){
+    const lock=el("div","tlock");
+    lock.appendChild(el("div","tlock-ic","🔒"));
+    lock.appendChild(el("div","tlock-t","文稿已锁定"));
+    lock.appendChild(el("div","tlock-d","建议先完成听写（第 2 步），再解锁对照。偷看会削弱训练效果。"));
+    const b=el("button","tlock-btn","解锁查看文稿");
+    b.onclick=()=>{if(confirm("确定要查看文稿吗？\n建议先完成听写再对照，效果更好。")){m._unlocked=true;renderTranscriptSection(m,box);}};
+    lock.appendChild(b);
+    box.appendChild(lock);
+  }else{
+    const bar=el("div","tunlock-bar");
+    bar.appendChild(el("span",null,"🔓 已解锁 · 点单词可查词"));
+    const rb=el("button","tlock-relock","重新锁定");
+    rb.onclick=()=>{m._unlocked=false;renderTranscriptSection(m,box);};
+    bar.appendChild(rb);
+    box.appendChild(bar);
+    box.appendChild(buildTranscriptEl(m));
+  }
+}
+function buildTranscriptEl(m){
+  const d=el("div","transcript");
+  const text=m.transcript||"";
+  const re=/[A-Za-z][A-Za-z'’-]*/g;
+  let last=0,mt;
+  while((mt=re.exec(text))!==null){
+    if(mt.index>last)d.appendChild(document.createTextNode(text.slice(last,mt.index)));
+    const word=mt[0];
+    const span=el("span","w",escapeHtml(word));
+    span.onclick=()=>lookupWord(m,word,span);
+    d.appendChild(span);
+    last=re.lastIndex;
+  }
+  if(last<text.length)d.appendChild(document.createTextNode(text.slice(last)));
+  return d;
+}
+
+/* 听音找词（Datamuse sounds-like）：根据不标准拼写推荐发音相近的正确单词 */
+function soundsLike(q){
+  return fetch("https://api.datamuse.com/words?max=10&sl="+encodeURIComponent(q))
+    .then(r=>r.ok?r.json():[])
+    .then(a=>Array.isArray(a)?a.map(o=>(o.word||"").toLowerCase())
+      .filter(w=>w&&/^[a-z][a-z'’ -]*$/.test(w)).slice(0,8):[])
+    .catch(()=>[]);
+}
+function suggestWords(m,raw){
+  const q=(raw||"").trim().toLowerCase();if(!q)return;
+  const sg=document.getElementById("sg_"+m.id);
+  if(sg){sg.innerHTML="";sg.appendChild(el("div","suggest-lbl","按发音搜索中…"));}
+  soundsLike(q).then(list=>renderSuggests(m,list));
+}
+function renderSuggests(m,list){
+  const sg=document.getElementById("sg_"+m.id);if(!sg)return;
+  sg.innerHTML="";
+  if(!list||!list.length){sg.appendChild(el("div","suggest-lbl","没找到相近的词，换个拼法（把听到的音节尽量拼出来）再试。"));return;}
+  sg.appendChild(el("div","suggest-lbl","你是不是想找？点选即查释义并记入生词本："));
+  const wrap=el("div","sugchips");
+  list.forEach(w=>{const c=el("button","sugchip",escapeHtml(w));c.onclick=()=>lookupWord(m,w,null);wrap.appendChild(c);});
+  sg.appendChild(wrap);
 }
 
 /* ---------------- charts ---------------- */
@@ -848,17 +1172,135 @@ $("#saveBtn").onclick=()=>{
   const m={id:uid(),title,nprUrl:$("#fNpr").value.trim(),audioUrl:$("#fAudio").value.trim(),
     durSec:parseDur($("#fDur").value),transcript:$("#fText").value.trim(),
     createdAt:today(),steps:{select:true,dictation:false,recite:false,speed:false},
-    reciteTimes:[],reciteDate:null,lastReviewAt:null,reviewCount:0,log:[],notes:"",_open:true};
+    reciteTimes:[],reciteDate:null,lastReviewAt:null,reviewCount:0,log:[],notes:"",vocab:[],_open:true};
   state.materials.unshift(m);closeModal();render();
 };
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+/* 音频键盘快捷键：空格 播放/暂停，←/→ 前后 5 秒（作用于当前选中的播放器） */
+let currentAudio=null;
+document.addEventListener("keydown",e=>{
+  const t=e.target,tag=t&&t.tagName;
+  if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT"||(t&&t.isContentEditable))return;  // 打字时不拦截
+  if(tag==="AUDIO")return;                         // 播放器聚焦时交给原生控件
+  const mb=document.getElementById("modalBg");
+  if(mb&&mb.classList.contains("show"))return;
+  if(currentAudio&&!document.contains(currentAudio))currentAudio=null;                  // 播放器已被移除
+  if(!currentAudio||!currentAudio.src)return;
+  if(e.code==="Space"||e.key===" "||e.key==="Spacebar"){
+    e.preventDefault();
+    if(currentAudio.paused)currentAudio.play();else currentAudio.pause();
+  }else if(e.key==="ArrowLeft"){
+    e.preventDefault();currentAudio.currentTime=Math.max(0,currentAudio.currentTime-5);
+  }else if(e.key==="ArrowRight"){
+    e.preventDefault();currentAudio.currentTime=Math.min(currentAudio.duration||1e9,currentAudio.currentTime+5);
+  }
+});
 
 /* ---------------- utils ---------------- */
 function escapeHtml(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function escapeAttr(s){return escapeHtml(s);}
 
+/* ---------------- Firebase：登录 + 云同步（可选，未配置则自动本机模式） ---------------- */
+/* ====== 把你 Firebase 项目的网页配置粘到这里（替换 PASTE_ 开头的值） ======
+   在 Firebase 控制台 → 项目设置 → 你的应用 → SDK 配置里复制。这些值可公开，安全靠后端规则保障。 */
+const firebaseConfig = {
+  apiKey:            "PASTE_apiKey",
+  authDomain:        "PASTE_projectId.firebaseapp.com",
+  projectId:         "PASTE_projectId",
+  storageBucket:     "PASTE_projectId.appspot.com",
+  appId:             "PASTE_appId"
+};
+/* ====================================================================== */
+
+let fb={ok:false,auth:null,db:null,storage:null,user:null};
+let _pushTimer=null,_lastPushedAt=0,_unsub=null,_applyingRemote=false;
+function skipRuntime(k,v){return (k==="_open"||k==="_unlocked")?undefined:v;}
+function normalizeState(){
+  if(!state.settings)state.settings={goal:10,level:"beginner"};
+  if(!Array.isArray(state.materials))state.materials=[];
+  state.materials.forEach(m=>{m._open=false;m.log=m.log||[];m.reciteTimes=m.reciteTimes||[];m.vocab=m.vocab||[];
+    m.steps=m.steps||{select:true,dictation:false,recite:false,speed:false};});
+}
+function fbInit(){
+  if(typeof firebase==="undefined"){setSyncUI("local");return;}
+  if(!firebaseConfig.apiKey||firebaseConfig.apiKey.indexOf("PASTE")===0){setSyncUI("unconfigured");updateAuthUI();return;}
+  try{
+    firebase.initializeApp(firebaseConfig);
+    fb.auth=firebase.auth();fb.db=firebase.firestore();
+    try{fb.storage=firebase.storage();}catch(e){fb.storage=null;}
+    fb.ok=true;
+    fb.auth.onAuthStateChanged(onAuth);
+    setSyncUI("signedout");updateAuthUI();
+  }catch(e){console.warn("firebase init failed",e);setSyncUI("local");}
+}
+function onAuth(user){
+  fb.user=user;
+  if(_unsub){_unsub();_unsub=null;}
+  updateAuthUI();
+  if(!user){setSyncUI("signedout");return;}
+  setSyncUI("loading");
+  const ref=fb.db.collection("users").doc(user.uid);
+  _unsub=ref.onSnapshot(snap=>{
+    const data=snap.data();
+    if(!data||!data.state){ pushNow(); return; }              // no remote yet -> seed from local
+    if(data.updatedAt && data.updatedAt===_lastPushedAt){ setSyncUI("synced"); return; } // our own echo
+    try{
+      const remote=JSON.parse(data.state);
+      const rU=remote.updatedAt||0, lU=state.updatedAt||0;
+      if(rU>lU){ _applyingRemote=true; state=remote; normalizeState(); saveLocalOnly(); render(); _applyingRemote=false; }
+    }catch(e){console.warn("parse remote failed",e);}
+    setSyncUI("synced");
+  }, err=>{console.warn("snapshot err",err);setSyncUI("error");});
+}
+function schedulePush(){
+  if(!fb.ok||!fb.user||_applyingRemote)return;
+  clearTimeout(_pushTimer);_pushTimer=setTimeout(pushNow,1200);
+}
+function pushNow(){
+  if(!fb.ok||!fb.user)return;
+  state.updatedAt=state.updatedAt||Date.now();
+  _lastPushedAt=state.updatedAt;
+  setSyncUI("saving");
+  fb.db.collection("users").doc(fb.user.uid)
+    .set({state:JSON.stringify(state,skipRuntime),updatedAt:_lastPushedAt},{merge:true})
+    .then(()=>setSyncUI("synced")).catch(e=>{console.warn("push err",e);setSyncUI("error");});
+}
+function signIn(){
+  if(!fb.ok)return;
+  const p=new firebase.auth.GoogleAuthProvider();
+  fb.auth.signInWithPopup(p).catch(err=>{
+    if(err&&(err.code==="auth/popup-blocked"||err.code==="auth/popup-closed-by-user"||err.code==="auth/cancelled-popup-request")){
+      try{fb.auth.signInWithRedirect(p);}catch(e){}
+    } else { alert("登录失败："+((err&&err.message)||err)); }
+  });
+}
+function updateAuthUI(){
+  const a=document.getElementById("authArea");if(!a)return;a.innerHTML="";
+  if(!fb.ok){
+    if(firebaseConfig.apiKey.indexOf("PASTE")===0){
+      const t=el("span","who","（未配置同步）");a.appendChild(t);
+    }
+    return;
+  }
+  if(fb.user){
+    a.appendChild(el("span","who",escapeHtml(fb.user.displayName||fb.user.email||"已登录")));
+    const out=el("button","authbtn ghost","退出");out.onclick=()=>fb.auth.signOut();
+    a.appendChild(out);
+  }else{
+    const b=el("button","authbtn","登录以同步");b.onclick=signIn;a.appendChild(b);
+  }
+}
+function setSyncUI(s){
+  const e=document.getElementById("syncStatus");if(!e)return;
+  const map={local:"仅本机运行",unconfigured:"未配置云同步",signedout:"未登录 · 仅本机",
+    loading:"读取云端…",saving:"保存中…",synced:"已同步 ✓",error:"同步出错，稍后重试"};
+  e.textContent=map[s]||"";
+  e.className="synced "+(s==="error"?"err":(s==="synced"?"ok":""));
+}
+
 /* ---------------- boot ---------------- */
 render();
+fbInit();
 </script>
 </body>
 </html>
