@@ -75,6 +75,25 @@
   .season-ticks span:last-child{border-right:none;}
   .season-cap{font-size:13px;font-weight:700;white-space:nowrap;}
   .season-cap b{color:#ff6b6b;font-size:18px;}
+  /* intro / home */
+  .intro{margin-top:18px;}
+  .intro-lead{font-size:17px;font-weight:800;letter-spacing:-.01em;margin-bottom:12px;}
+  .intro-steps{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .istep{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:12px 13px;box-shadow:var(--sh);}
+  .istep-n{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--red);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .istep b{display:block;font-size:14px;margin-bottom:2px;}
+  .istep span{font-size:12px;color:var(--gray);line-height:1.5;}
+  .start-btn{width:100%;margin:22px 0 6px;border:none;background:var(--red);color:#fff;font-size:16px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;padding:16px;border-radius:4px;cursor:pointer;box-shadow:0 4px 14px rgba(204,0,0,.28);}
+  .start-btn:hover{background:var(--red-d);}
+  /* study header */
+  .study-head{background:var(--ink);color:#fff;display:flex;align-items:center;gap:14px;padding:13px 20px;position:sticky;top:0;z-index:20;}
+  .back-btn{border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:3px;cursor:pointer;white-space:nowrap;}
+  .back-btn:hover{background:rgba(255,255,255,.12);}
+  .study-title{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:800;min-width:0;}
+  .logo-box.sm{font-size:14px;padding:3px 7px;}
+  .mat-count{font-size:11px;font-weight:700;color:#9aa8a4;letter-spacing:0;}
+  .study-live{margin-left:auto;font-family:var(--mono);font-size:13px;font-weight:700;background:var(--red);color:#fff;padding:5px 11px;border-radius:100px;white-space:nowrap;}
+  .study-live.paused{background:#555;}
 
   /* ---------- stats ---------- */
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px;}
@@ -167,6 +186,8 @@
   .transcript{font-size:15px;line-height:1.85;background:#FAFAFA;border:1px solid var(--line);border-left:3px solid var(--red);border-radius:3px;padding:14px 16px;white-space:pre-wrap;max-height:280px;overflow:auto;margin-top:8px;}
   .transcript .w{cursor:pointer;border-radius:3px;padding:0 1px;transition:background .12s;}
   .transcript .w:hover{background:var(--red-soft);color:var(--red);}
+  .transcript .w.hit{background:var(--red-soft);color:var(--red);font-weight:700;}
+  .transcript .w.hit:hover{background:#f6cccc;}
   .tsec{margin-top:16px;}
   .tlock{border:1px dashed var(--line);border-radius:4px;background:#FAFAFA;padding:20px 16px;text-align:center;}
   .tlock-ic{font-size:26px;}
@@ -210,6 +231,8 @@
   .saybtn:hover{background:#333;}
   .ydlink{font-size:12px;font-weight:800;color:var(--red);}
   .savedtag{font-size:11px;color:#2e8b57;font-weight:700;}
+  .addvbtn{border:none;background:var(--red);color:#fff;border-radius:100px;padding:6px 13px;font-size:12px;font-weight:800;cursor:pointer;}
+  .addvbtn:hover{background:var(--red-d);}
   .vocab-head{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--ink);margin:14px 0 8px;}
   .vocab-list{display:flex;flex-direction:column;gap:6px;}
   .vocab-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--line);border-radius:3px;background:var(--card);}
@@ -298,6 +321,8 @@
 </style>
 </head>
 <body>
+<!-- ============ 首页 HOME ============ -->
+<div id="homeView">
 <div class="topstrip"></div>
 <div class="masthead">
   <div class="mh-left">
@@ -314,7 +339,7 @@
   </div>
 </div>
 <div class="season">
-  <div class="season-label">本季征途</div>
+  <div class="season-label">本机征途</div>
   <div class="season-bar">
     <div class="season-fill" id="dialFill" style="width:0%"></div>
     <div class="season-needle" id="dialNeedle" style="left:0%"></div>
@@ -324,18 +349,28 @@
 </div>
 
 <div class="wrap">
+  <!-- 功能介绍 -->
+  <div class="intro">
+    <div class="intro-lead">选一档 NPR 节目，用四步把它啃透。</div>
+    <div class="intro-steps">
+      <div class="istep"><span class="istep-n">1</span><div><b>选材料</b><span>挑一段感兴趣、听得下去的 NPR 音频</span></div></div>
+      <div class="istep"><span class="istep-n">2</span><div><b>逐字听写</b><span>不看文稿边听边写，点词查词记生词</span></div></div>
+      <div class="istep"><span class="istep-n">3</span><div><b>通篇背诵</b><span>弄懂词句后把整篇背下来</span></div></div>
+      <div class="istep"><span class="istep-n">4</span><div><b>背到原速</b><span>练到能以原声语速脱口而出</span></div></div>
+    </div>
+  </div>
 
-  <!-- ===== STATS ===== -->
+  <button class="start-btn" id="startBtn">▶ 开始学习 · 进入「我的料」</button>
+
+  <!-- ===== 学习数据 ===== -->
+  <div class="sec-head"><span class="no">01</span><h2>学习数据</h2><span class="hint">数据实时保存在本机</span></div>
   <div class="stats">
     <div class="stat"><div class="k">累计学习</div><div class="v" id="statMinutes">0<small> 分钟</small></div></div>
     <div class="stat flame"><div class="k">连续打卡</div><div class="v" id="statStreak">0<small> 天</small></div></div>
     <div class="stat done"><div class="k">已上线</div><div class="v" id="statDone">0<small> 篇</small></div></div>
     <div class="stat"><div class="k">今日复习</div><div class="v" id="statReview">0<small> 篇待复习</small></div></div>
   </div>
-
-  <!-- ===== CHARTS ===== -->
-  <div class="sec-head"><span class="no">01</span><h2>学习成果</h2><span class="hint">数据实时保存在本机</span></div>
-  <div class="cards-2">
+  <div class="cards-2" style="margin-top:14px;">
     <div class="box">
       <h3>十篇征途 <span id="journeyLegend"></span></h3>
       <div class="chart-holder"><canvas id="journeyChart"></canvas></div>
@@ -346,12 +381,26 @@
     </div>
   </div>
 
-  <!-- ===== REVIEW ===== -->
+  <!-- ===== 今日复习 ===== -->
   <div class="sec-head"><span class="no">02</span><h2>今日复习</h2><span class="hint">背过的料，按遗忘曲线回炉</span></div>
   <div class="review-list" id="reviewList"></div>
 
-  <!-- ===== MATERIALS ===== -->
-  <div class="sec-head"><span class="no">03</span><h2>我的料</h2><span class="hint" id="matHint"></span></div>
+  <div class="footnote">
+    <b>四步法</b>：① 选材料 · ② 逐字听写查词 · ③ 通篇背诵 · ④ 背到与原声同速。<br>
+    进度、笔记、计时保存在当前电脑的浏览器里。换电脑用：先「导出进度」得到备份文件，拷到另一台电脑「导入进度」即可；音频文件（OGG/WAV）请随身携带、各电脑重新载入。
+  </div>
+</div>
+</div>
+
+<!-- ============ 学习页 STUDY ============ -->
+<div id="studyView" style="display:none">
+<div class="topstrip"></div>
+<div class="study-head">
+  <button class="back-btn" id="backBtn">← 返回首页</button>
+  <div class="study-title"><span class="logo-box sm">啃料</span><span>我的料</span><span class="mat-count" id="matHint"></span></div>
+  <div class="study-live" id="studyLive">⏱ 学习中 00:00</div>
+</div>
+<div class="wrap">
   <div class="toolbar">
     <button class="btn primary" id="addBtn">+ 添加一档 NPR 材料</button>
     <a class="btn ghost" id="findBtn" href="https://www.npr.org/" target="_blank" rel="noopener">去 NPR 找料 ↗</a>
@@ -366,11 +415,7 @@
     <span class="mono" style="user-select:all">npr.org/sections/storycorps</span>
   </div>
   <div id="materials"></div>
-
-  <div class="footnote">
-    <b>四步法</b>：① 选材料 · ② 逐字听写查词 · ③ 通篇背诵 · ④ 背到与原声同速。<br>
-    进度、笔记、计时保存在当前电脑的浏览器里。换电脑用：先「导出进度」得到备份文件，拷到另一台电脑「导入进度」即可；音频文件（OGG/WAV）请随身携带、各电脑重新载入。
-  </div>
+</div>
 </div>
 
 <!-- ===== ADD MODAL ===== -->
@@ -433,8 +478,8 @@ function parseDur(s){ // "4:30" or "270" -> seconds
 }
 function fmtDur(sec){if(!sec)return "—";const m=Math.floor(sec/60),s=sec%60;return m+":"+String(s).padStart(2,"0");}
 function stepsDone(m){return STEP_DEFS.filter(s=>m.steps[s.k]).length;}
-function totalMinutes(){let t=0;state.materials.forEach(m=>m.log.forEach(l=>t+=l.minutes));return t;}
-function allLogDates(){const s=new Set();state.materials.forEach(m=>m.log.forEach(l=>s.add(l.date)));return s;}
+function totalMinutes(){let t=0;state.materials.forEach(m=>m.log.forEach(l=>t+=l.minutes));(state.studyLog||[]).forEach(l=>t+=l.minutes);return t;}
+function allLogDates(){const s=new Set();state.materials.forEach(m=>m.log.forEach(l=>s.add(l.date)));(state.studyLog||[]).forEach(l=>s.add(l.date));return s;}
 function streak(){
   const set=allLogDates();if(set.size===0)return 0;
   let n=0;let d=new Date();
@@ -596,15 +641,8 @@ function buildBody(m,wrap,body){
   // ---- tempo / recitation timer ----
   body.appendChild(tempoEl(m));
 
-  // ---- 学习计时（手动开始/结束，计入累计学习）----
+  // ---- 删除（学习时间已由进入学习页自动计时）----
   const log=el("div","log-row");
-  log.appendChild(el("span","chip","学习计时"));
-  const stDisp=el("span","study-time");stDisp.id="st_"+m.id;
-  const stRun=studyTimers[m.id];
-  stDisp.textContent=stRun?fmt(Math.floor(stRun.elapsed||0)):"00:00";
-  const stBtn=el("button","btn-mini");stBtn.textContent=stRun?"■ 结束并记录":"▶ 开始学习";
-  stBtn.onclick=()=>toggleStudy(m,wrap,stBtn);
-  log.appendChild(stDisp);log.appendChild(stBtn);
   const del=el("button","del","删除这档");
   del.onclick=()=>{if(confirm("确定删除「"+m.title+"」？此操作无法撤销。")){
     const u=audioURLCache[m.id];if(u&&u.indexOf("blob:")===0)URL.revokeObjectURL(u);delete audioURLCache[m.id];
@@ -629,7 +667,7 @@ function buildBody(m,wrap,body){
   if(m.transcript){
     const sec=el("div","tsec");
     sec.appendChild(el("div","vocab-title","文稿 Transcript"));
-    const inner=el("div");
+    const inner=el("div");inner.id="ts_"+m.id;
     renderTranscriptSection(m,inner);
     sec.appendChild(inner);
     body.appendChild(sec);
@@ -716,9 +754,7 @@ function toggleTimer(m,btn){
   if(t){ // stop
     cancelAnimationFrame(t.raf);
     const secs=Math.round(t.elapsed);
-    if(secs>0){m.reciteTimes=m.reciteTimes||[];m.reciteTimes.push({date:today(),seconds:secs});
-      // also count recitation time as study
-      m.log.push({date:today(),minutes:Math.max(1,Math.round(secs/60))});}
+    if(secs>0){m.reciteTimes=m.reciteTimes||[];m.reciteTimes.push({date:today(),seconds:secs});}
     delete timers[m.id];
     render();
   } else {
@@ -880,7 +916,7 @@ function removeAudio(m){
 
 /* ---------------- 查词 + 生词本 ---------------- */
 function youdaoURL(w){return "https://www.youdao.com/result?word="+encodeURIComponent(w)+"&lang=en";}
-function normWord(s){return (s||"").trim().toLowerCase().replace(/[^a-z'’-]+/g,"").replace(/^['’-]+|['’-]+$/g,"");}
+function normWord(s){return (s||"").trim().toLowerCase().replace(/[^a-z'’ -]+/g," ").replace(/\s+/g," ").replace(/^[\s'’-]+|[\s'’-]+$/g,"");}
 
 function buildVocab(m){
   m.vocab=m.vocab||[];
@@ -932,6 +968,7 @@ function lookupWord(m,raw,anchor){
   const w=normWord(raw);if(!w)return;
   m.vocab=m.vocab||[];
   const sg0=document.getElementById("sg_"+m.id);if(sg0)sg0.innerHTML="";
+  const isPhrase=w.indexOf(" ")>=0;
   let entry=m.vocab.find(v=>v.w===w)||{w:w,phonetic:"",def:"",ex:"",audio:"",pos:"",date:today(),mastered:false,note:""};
   renderResult(m,entry,"loading",anchor);
   fetchDef(w).then(res=>{
@@ -939,14 +976,18 @@ function lookupWord(m,raw,anchor){
       if(!entry.phonetic)entry.phonetic=res.phonetic||"";
       if(res.meanings[0]){if(!entry.def)entry.def=res.meanings[0].def||"";if(!entry.ex)entry.ex=res.meanings[0].ex||"";if(!entry.pos)entry.pos=res.meanings[0].pos||"";}
       if(!entry.audio)entry.audio=res.audio||"";
-      if(!m.vocab.find(v=>v.w===w))m.vocab.unshift(entry);   // 确认是真实单词后才记入生词本
-      save();renderVocabList(m);renderResult(m,entry,"ok",anchor);
-    }else{
-      renderResult(m,entry,"fail",anchor);
-      suggestWords(m,w);                                     // 查不到 → 自动按发音推荐
     }
+    if(res||isPhrase){ renderResult(m,entry,"ok",anchor); }      // 词组即使无英文释义也可保存；不再自动收藏
+    else { renderResult(m,entry,"fail",anchor); suggestWords(m,w); }  // 单词查不到 → 按发音推荐
   });
 }
+function addToVocab(m,entry,anchor){
+  m.vocab=m.vocab||[];
+  if(!m.vocab.some(v=>v.w===entry.w)){entry.date=entry.date||today();m.vocab.unshift(entry);}
+  save();renderVocabList(m);refreshTranscript(m);
+  renderResult(m,entry,"ok",anchor);
+}
+function refreshTranscript(m){const box=document.getElementById("ts_"+m.id);if(box)renderTranscriptSection(m,box);}
 function hasCJK(s){return /[\u4e00-\u9fff]/.test(s||"");}
 function fetchCN(word){   // 英译中（MyMemory，免费、跨域、国内可访问）
   return fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(word)+"&langpair=en|zh-CN")
@@ -966,7 +1007,7 @@ function fetchDef(word){
       return {word:e.word||word,phonetic:phonetic,audio:audio,meanings:meanings};
     }).catch(()=>null);
 }
-function resultCard(entry,state){
+function resultCard(m,entry,state,anchor){
   const c=el("div","rescard");
   const head=el("div");
   head.innerHTML='<span class="rw">'+escapeHtml(entry.w)+'</span>'+(entry.phonetic?'<span class="rph">'+escapeHtml(entry.phonetic)+'</span>':'');
@@ -981,7 +1022,10 @@ function resultCard(entry,state){
   const row=el("div","rrow");
   const s=el("button","saybtn","🔊 发音");s.title="听发音，对照跟读";s.onclick=()=>sayWord(entry);row.appendChild(s);
   const yd=el("a","ydlink");yd.textContent="有道翻译 ↗";yd.href=youdaoURL(entry.w);yd.target="_blank";yd.rel="noopener";row.appendChild(yd);
-  if(state==="ok")row.appendChild(el("span","savedtag","已记入生词本 ✓"));
+  if(state==="ok"){
+    if(m.vocab&&m.vocab.some(v=>v.w===entry.w)){row.appendChild(el("span","savedtag","已在生词本 ✓"));}
+    else{const add=el("button","addvbtn","➕ 加入生词本");add.onclick=()=>addToVocab(m,entry,anchor);row.appendChild(add);}
+  }
   c.appendChild(row);
   return c;
 }
@@ -1007,10 +1051,10 @@ function showPopAt(anchor,node){
 }
 function renderResult(m,entry,state,anchor){
   const lk=document.getElementById("lk_"+m.id);
-  if(lk){lk.innerHTML="";lk.appendChild(resultCard(entry,state));}
+  if(lk){lk.innerHTML="";lk.appendChild(resultCard(m,entry,state,null));}
   if(anchor){
-    if(state==="loading"){popWord=entry.w;showPopAt(anchor,resultCard(entry,state));}
-    else if(popEl&&popEl.style.display!=="none"&&popWord===entry.w){popEl.innerHTML="";popEl.appendChild(resultCard(entry,state));}
+    if(state==="loading"){popWord=entry.w;showPopAt(anchor,resultCard(m,entry,state,anchor));}
+    else if(popEl&&popEl.style.display!=="none"&&popWord===entry.w){popEl.innerHTML="";popEl.appendChild(resultCard(m,entry,state,anchor));}
   }
 }
 function renderTranscriptSection(m,box){
@@ -1026,7 +1070,7 @@ function renderTranscriptSection(m,box){
     box.appendChild(lock);
   }else{
     const bar=el("div","tunlock-bar");
-    bar.appendChild(el("span",null,"🔓 已解锁 · 点单词可查词"));
+    bar.appendChild(el("span",null,"🔓 已解锁 · 点单词查词；标红为已收藏的生词/词组"));
     const rb=el("button","tlock-relock","重新锁定");
     rb.onclick=()=>{m._unlocked=false;renderTranscriptSection(m,box);};
     bar.appendChild(rb);
@@ -1037,17 +1081,38 @@ function renderTranscriptSection(m,box){
 function buildTranscriptEl(m){
   const d=el("div","transcript");
   const text=m.transcript||"";
-  const re=/[A-Za-z][A-Za-z'’-]*/g;
-  let last=0,mt;
-  while((mt=re.exec(text))!==null){
-    if(mt.index>last)d.appendChild(document.createTextNode(text.slice(last,mt.index)));
-    const word=mt[0];
-    const span=el("span","w",escapeHtml(word));
-    span.onclick=()=>lookupWord(m,word,span);
-    d.appendChild(span);
-    last=re.lastIndex;
+  const lower=text.toLowerCase();
+  const terms=(m.vocab||[]).map(v=>v.w).filter(Boolean).sort((a,b)=>b.length-a.length); // 词组优先匹配
+  const isWordChar=c=>/[a-z0-9'’]/.test(c||"");
+  let i=0;
+  while(i<text.length){
+    let matched=null;
+    for(let k=0;k<terms.length;k++){
+      const t=terms[k];
+      if(t&&lower.startsWith(t,i)){
+        const before=i>0?lower[i-1]:"", after=lower[i+t.length]||"";
+        if(!isWordChar(before)&&!isWordChar(after)){matched=t;break;}
+      }
+    }
+    if(matched){
+      const slice=text.substr(i,matched.length), term=matched;
+      const span=el("span","w hit",escapeHtml(slice));
+      span.onclick=()=>lookupWord(m,term,span);
+      d.appendChild(span);i+=matched.length;continue;
+    }
+    const rest=text.slice(i);
+    const wm=rest.match(/^[A-Za-z][A-Za-z'’-]*/);
+    if(wm){
+      const word=wm[0];
+      const span=el("span","w",escapeHtml(word));
+      span.onclick=()=>lookupWord(m,word,span);
+      d.appendChild(span);i+=word.length;
+    }else{
+      const nm=rest.match(/^[^A-Za-z]+/);
+      const chunk=nm?nm[0]:rest.charAt(0);
+      d.appendChild(document.createTextNode(chunk));i+=chunk.length;
+    }
   }
-  if(last<text.length)d.appendChild(document.createTextNode(text.slice(last)));
   return d;
 }
 
@@ -1102,6 +1167,7 @@ function renderCharts(){
   // minutes last 14 days
   const labels=[],vals=[];
   const byDate={};state.materials.forEach(m=>m.log.forEach(l=>{byDate[l.date]=(byDate[l.date]||0)+l.minutes;}));
+  (state.studyLog||[]).forEach(l=>{byDate[l.date]=(byDate[l.date]||0)+l.minutes;});
   for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=dateStr(d);
     labels.push((d.getMonth()+1)+"/"+d.getDate());vals.push(byDate[ds]||0);}
   if(!minutesChart){
@@ -1218,6 +1284,7 @@ function skipRuntime(k,v){return (k==="_open"||k==="_unlocked")?undefined:v;}
 function normalizeState(){
   if(!state.settings)state.settings={goal:10,level:"beginner"};
   if(!Array.isArray(state.materials))state.materials=[];
+  if(!Array.isArray(state.studyLog))state.studyLog=[];
   state.materials.forEach(m=>{m._open=false;m.log=m.log||[];m.reciteTimes=m.reciteTimes||[];m.vocab=m.vocab||[];
     m.steps=m.steps||{select:true,dictation:false,recite:false,speed:false};});
 }
@@ -1298,9 +1365,42 @@ function setSyncUI(s){
   e.className="synced "+(s==="error"?"err":(s==="synced"?"ok":""));
 }
 
+/* ---------------- 双页面导航 + 进入学习页自动计时 ---------------- */
+let studySession=null,studyTick=null;
+function studyElapsedSec(){if(!studySession)return 0;let s=studySession.accum;if(studySession.lastStart!=null)s+=(performance.now()-studySession.lastStart)/1000;return s;}
+function renderStudyLive(){
+  const e=document.getElementById("studyLive");if(!e)return;
+  const paused=studySession&&studySession.lastStart==null;
+  e.textContent=(paused?"⏸ 已暂停 ":"⏱ 学习中 ")+fmt(Math.floor(studyElapsedSec()));
+  e.classList.toggle("paused",!!paused);
+}
+function studyStart(){
+  if(!studySession)studySession={accum:0,lastStart:performance.now()};
+  else if(studySession.lastStart==null)studySession.lastStart=performance.now();
+  if(!studyTick)studyTick=setInterval(renderStudyLive,1000);
+  renderStudyLive();
+}
+function studyPauseTimer(){if(studySession&&studySession.lastStart!=null){studySession.accum+=(performance.now()-studySession.lastStart)/1000;studySession.lastStart=null;}renderStudyLive();}
+function studyResumeTimer(){if(studySession&&studySession.lastStart==null){studySession.lastStart=performance.now();}renderStudyLive();}
+function studyStop(){
+  if(!studySession)return;
+  const sec=Math.round(studyElapsedSec());
+  if(studyTick){clearInterval(studyTick);studyTick=null;}
+  studySession=null;
+  const mins=Math.round(sec/60);
+  if(mins>=1){state.studyLog=state.studyLog||[];state.studyLog.push({date:today(),minutes:mins});save();}
+}
+function inStudyView(){const s=document.getElementById("studyView");return s&&s.style.display!=="none";}
+function showStudy(){document.getElementById("homeView").style.display="none";document.getElementById("studyView").style.display="";window.scrollTo(0,0);studyStart();}
+function showHome(){studyStop();document.getElementById("studyView").style.display="none";document.getElementById("homeView").style.display="";window.scrollTo(0,0);render();}
+
 /* ---------------- boot ---------------- */
 render();
 fbInit();
+$("#startBtn").onclick=showStudy;
+$("#backBtn").onclick=showHome;
+document.addEventListener("visibilitychange",()=>{if(inStudyView()){if(document.hidden)studyPauseTimer();else studyResumeTimer();}});
+window.addEventListener("beforeunload",()=>{studyStop();});
 </script>
 </body>
 </html>
