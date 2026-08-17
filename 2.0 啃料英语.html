@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>啃料 10 · NPR 英语精修</title>
+<title>Dictation 工作台——收集素材、盲听查词、记录每一篇的听写进度</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <!-- Firebase (登录 + 云同步)。GitHub Pages 上正常加载；在 Cowork 卡片沙盒中会被拦截，此时 app 自动降级为仅本机模式。 -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -107,8 +107,7 @@
   @keyframes float{from{transform:translateY(-6px)}to{transform:translateY(8px)}}
   .eyebrow{font-size:13px;font-weight:800;color:var(--green);letter-spacing:.14em;}
   .hero-copy h1{font-size:clamp(32px,4.2vw,48px);font-weight:800;color:var(--head);line-height:1.22;letter-spacing:-.01em;margin:20px 0 0;}
-  .hero-sub{font-size:17px;font-weight:500;line-height:28px;color:var(--muted);max-width:460px;margin:28px 0 40px;}
-  .hero-cta{display:flex;gap:16px;flex-wrap:wrap;}
+  .hero-cta{display:flex;gap:16px;flex-wrap:wrap;margin-top:40px;}
   .hero-note{font-size:13px;color:var(--disabled);font-weight:600;margin-top:24px;letter-spacing:.02em;}
 
   /* ================= 屏幕分区 ================= */
@@ -121,17 +120,14 @@
   .sec-sub{font-size:17px;font-weight:500;line-height:26px;color:var(--muted);max-width:560px;}
   .sec-head.center .sec-sub{margin:0 auto;}
 
-  .journey-count{font-size:48px;font-weight:800;color:var(--head);margin-top:24px;line-height:1;}
-  .journey-count b{color:var(--green);}
-  .journey-count .jc-sep{color:var(--disabled);margin:0 10px;font-weight:700;}
-  .journey-count .jc-unit{font-size:17px;color:var(--muted);font-weight:700;margin-left:14px;}
-  .journey-sub{margin:20px auto 0;}
-  .season-bar{height:26px;max-width:720px;margin:48px auto 0;background:var(--line);position:relative;overflow:hidden;border-radius:100px;}
-  .season-fill{position:absolute;left:0;top:0;height:100%;background:var(--green);border-radius:100px;transition:width .5s ease;}
-  .season-needle{display:none;}
-  .season-ticks{position:absolute;inset:0;display:flex;pointer-events:none;}
-  .season-ticks span{flex:1;border-right:2px solid rgba(255,255,255,.75);}
-  .season-ticks span:last-child{border-right:none;}
+  /* ================= 功能介绍 2×2 ================= */
+  .feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .fcard{background:#fff;border:2px solid var(--line);border-radius:var(--r);padding:36px 32px;display:flex;gap:20px;align-items:flex-start;transition:border-color .2s,transform .2s;}
+  .fcard:hover{border-color:var(--green-light);transform:translateY(-4px);}
+  .fcard-ic{width:52px;height:52px;border-radius:var(--r);background:var(--green-pale);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+  .fcard h3{font-size:19px;font-weight:800;color:var(--head);margin-bottom:8px;}
+  .fcard p{font-size:14px;font-weight:500;line-height:22px;color:var(--muted);}
+  @media(max-width:768px){.feat-grid{grid-template-columns:1fr;}.fcard{padding:28px 22px;}}
 
   .method-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;}
   .mcard{background:#fff;border:2px solid var(--line);border-radius:var(--r);padding:36px 28px;transition:border-color .2s,transform .2s;}
@@ -190,10 +186,8 @@
   .study-h1{font-size:32px;font-weight:800;color:var(--head);line-height:1.25;margin:14px 0 10px;}
   .study-sub{font-size:15px;color:var(--muted);font-weight:500;line-height:1.6;}
   .toolbar{display:flex;gap:14px;align-items:center;margin-bottom:24px;flex-wrap:wrap;}
-  .npr-hint{font-size:14px;color:var(--muted);margin:0 0 40px;line-height:2.1;font-weight:600;background:#fff;border:2px solid var(--line);border-radius:var(--r);padding:20px 24px;}
-  .npr-hint .mono{background:var(--snow);border:2px solid var(--line);border-radius:8px;padding:2px 8px;user-select:all;color:var(--ink);font-weight:700;font-size:13px;}
 
-  /* ---------- 材料卡片 ---------- */
+  /* ---------- 素材卡片 ---------- */
   .track{background:#fff;border:2px solid var(--line);border-radius:var(--r);margin-bottom:24px;overflow:hidden;transition:border-color .2s;}
   .track:hover{border-color:#d4d4d4;}
   .track.open{border-color:var(--green);}
@@ -372,12 +366,10 @@
     .hero-inner{grid-template-columns:1fr;text-align:center;gap:48px;}
     .hero-art{max-width:300px;}
     .art-ring{inset:-14px;}
-    .hero-sub{margin:24px auto 36px;}
     .hero-cta{justify-content:center;}
     .screen{padding:72px 0;}
     .screen.tall{min-height:auto;}
     .sec-title{font-size:26px;}
-    .journey-count{font-size:38px;}
     .stats{grid-template-columns:1fr 1fr;gap:16px;}
     .cards-2{grid-template-columns:1fr;}
     .method-grid{grid-template-columns:1fr;}
@@ -400,10 +392,10 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <div class="logo"><span class="logo-box">啃料</span><span class="logo-num">10</span></div>
+    <div class="logo"><span class="logo-box">Dictation</span><span class="logo-num">工作台</span></div>
     <div class="nav-links">
-      <a href="#journey">征途</a>
       <a href="#method">方法</a>
+      <a href="#features">功能</a>
       <a href="#data">数据</a>
       <a href="#review">复习</a>
     </div>
@@ -421,15 +413,13 @@
       <div class="art-ring"></div>
       <div class="art-blob"></div>
       <div class="art-emoji">🎧</div>
-      <span class="art-chip c1">✍️ 逐字听写</span>
+      <span class="art-chip c1">✍️ 盲听查词</span>
       <span class="art-chip c2">🗣️ 通篇背诵</span>
       <span class="art-chip c3">⚡ 原速输出</span>
-      <span class="art-chip c4">📻 NPR 原声</span>
+      <span class="art-chip c4">📻 英文原声</span>
     </div>
     <div class="hero-copy">
-      <div class="eyebrow">尚雯婕「啃料」学习法 · 素材源自 NPR</div>
-      <h1>啃透一篇，<br>胜过泛听百篇。</h1>
-      <p class="hero-sub">逐字听写 → 通篇背诵 → 背到与原声同速。一月一篇，十篇上线，把英语调成你的工作频道。</p>
+      <h1>吃透一篇，<br>胜过泛听百篇。</h1>
       <div class="hero-cta">
         <button class="btn primary xl" id="startBtn">▶ 开始学习</button>
         <a class="btn ghost xl" href="#method">了解四步法</a>
@@ -439,31 +429,58 @@
   </div>
 </header>
 
-<section class="screen tall" id="journey">
-  <div class="container narrow center">
-    <span class="sec-tag">本机征途</span>
-    <div class="journey-count"><b id="doneCount">0</b><span class="jc-sep">/</span><span id="goalCount">10</span><span class="jc-unit">篇上线</span></div>
-    <p class="sec-sub journey-sub">每一篇走完四步，征途就向前推进一格。十篇啃完，英语换挡。</p>
-    <div class="season-bar">
-      <div class="season-fill" id="dialFill" style="width:0%"></div>
-      <div class="season-needle" id="dialNeedle" style="left:0%"></div>
-      <div class="season-ticks" id="dialTicks"></div>
-    </div>
-  </div>
-</section>
-
 <section class="screen tall" id="method">
   <div class="container">
     <div class="sec-head center">
       <span class="sec-tag">方法论</span>
-      <h2 class="sec-title">选一档 NPR 节目，用四步把它啃透</h2>
+      <h2 class="sec-title">选一份英文音频，用四步把它吃透</h2>
       <p class="sec-sub">不求多，求透。一段音频从「听不懂」到「脱口而出」，只走这四步。</p>
     </div>
     <div class="method-grid">
-      <div class="mcard"><div class="mcard-n">1</div><h3>选材料</h3><p>挑一段感兴趣、听得下去的 NPR 音频，把它请进你的料库。</p></div>
-      <div class="mcard"><div class="mcard-n">2</div><h3>逐字听写</h3><p>不看文稿边听边写，生词逐个查字典，直到完全听懂。</p></div>
+      <div class="mcard"><div class="mcard-n">1</div><h3>收集素材</h3><p>挑一段感兴趣、听得下去的英文音频，把它收进你的素材库。</p></div>
+      <div class="mcard"><div class="mcard-n">2</div><h3>盲听查词</h3><p>不看文稿，逐字听写，生词逐个查字典，直到完全听懂。</p></div>
       <div class="mcard"><div class="mcard-n">3</div><h3>通篇背诵</h3><p>词句全部弄懂之后，把整篇从头背到尾。</p></div>
       <div class="mcard"><div class="mcard-n">4</div><h3>背到原速</h3><p>练到能以原声语速脱口而出——语感就是这样练出来的。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="screen tall" id="features">
+  <div class="container">
+    <div class="sec-head center">
+      <span class="sec-tag">功能介绍</span>
+      <h2 class="sec-title">我怎么帮你</h2>
+      <p class="sec-sub">从收录素材到吃透一篇，需要的工具都在这里。</p>
+    </div>
+    <div class="feat-grid">
+      <div class="fcard">
+        <div class="fcard-ic">🎧</div>
+        <div>
+          <h3>素材收录 · 快捷播放</h3>
+          <p>把音频和文稿收入素材库，本地音频随时载入，即刻播放。支持 0.5×–1.25× 变速、后退 5 秒、单篇循环及空格键播放/暂停。</p>
+        </div>
+      </div>
+      <div class="fcard">
+        <div class="fcard-ic">🔤</div>
+        <div>
+          <h3>盲听查词</h3>
+          <p>文稿默认锁定，引导你先听、后看。拼不出的生词，可通过大致拼写猜词，直到找到正确答案。</p>
+        </div>
+      </div>
+      <div class="fcard">
+        <div class="fcard-ic">📖</div>
+        <div>
+          <h3>生词成表 · 正文标亮</h3>
+          <p>查过的词一键收入本篇生词本，可标记「已掌握」。解锁文稿后，收藏过的生词和词组会在正文中自动标亮，点击即可重温释义——重点在哪，一眼可见。</p>
+        </div>
+      </div>
+      <div class="fcard">
+        <div class="fcard-ic">⏱</div>
+        <div>
+          <h3>学习时长 · 数据记录</h3>
+          <p>进入学习页自动计时，离开自动归档；背诵另有独立秒表，与原声时长对照练语速。累计学习、连续打卡、近 14 天投入，首页数据区一目了然。</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -478,7 +495,7 @@
     <div class="stats">
       <div class="stat"><div class="k">累计学习</div><div class="v" id="statMinutes">0<small> 分钟</small></div></div>
       <div class="stat flame"><div class="k">连续打卡</div><div class="v" id="statStreak">0<small> 天</small></div></div>
-      <div class="stat done"><div class="k">已上线</div><div class="v" id="statDone">0<small> 篇</small></div></div>
+      <div class="stat done"><div class="k">已完成</div><div class="v" id="statDone">0<small> 篇</small></div></div>
       <div class="stat"><div class="k">今日复习</div><div class="v" id="statReview">0<small> 篇待复习</small></div></div>
     </div>
     <div class="cards-2">
@@ -498,38 +515,38 @@
   <div class="container narrow">
     <div class="sec-head center">
       <span class="sec-tag">02 · 今日复习</span>
-      <h2 class="sec-title">背过的料，按遗忘曲线回炉</h2>
+      <h2 class="sec-title">背过的素材，按遗忘曲线回炉</h2>
       <p class="sec-sub">完成第 3 步后，系统会在第 1 / 2 / 4 / 7 / 15 天提醒你回来复习。</p>
     </div>
     <div class="review-list" id="reviewList"></div>
-    <div class="center-cta"><button class="btn ghost" data-gostudy>进入「我的料」→</button></div>
+    <div class="center-cta"><button class="btn ghost" data-gostudy>进入「素材库」→</button></div>
   </div>
 </section>
 
 <footer class="footer">
   <div class="marquee" aria-hidden="true">
     <div class="marquee-track">
-      <span class="mq-item">Up First</span><span class="mq-dot">●</span>
-      <span class="mq-item">Morning Edition</span><span class="mq-dot">●</span>
-      <span class="mq-item">StoryCorps</span><span class="mq-dot">●</span>
-      <span class="mq-item">Planet Money</span><span class="mq-dot">●</span>
-      <span class="mq-item">Fresh Air</span><span class="mq-dot">●</span>
-      <span class="mq-item">All Things Considered</span><span class="mq-dot">●</span>
-      <span class="mq-item">TED Radio Hour</span><span class="mq-dot">●</span>
-      <span class="mq-item">How I Built This</span><span class="mq-dot">●</span>
-      <span class="mq-item">Up First</span><span class="mq-dot">●</span>
-      <span class="mq-item">Morning Edition</span><span class="mq-dot">●</span>
-      <span class="mq-item">StoryCorps</span><span class="mq-dot">●</span>
-      <span class="mq-item">Planet Money</span><span class="mq-dot">●</span>
-      <span class="mq-item">Fresh Air</span><span class="mq-dot">●</span>
-      <span class="mq-item">All Things Considered</span><span class="mq-dot">●</span>
-      <span class="mq-item">TED Radio Hour</span><span class="mq-dot">●</span>
-      <span class="mq-item">How I Built This</span><span class="mq-dot">●</span>
+      <span class="mq-item">Dictation</span><span class="mq-dot">●</span>
+      <span class="mq-item">Listening</span><span class="mq-dot">●</span>
+      <span class="mq-item">Vocabulary</span><span class="mq-dot">●</span>
+      <span class="mq-item">Recitation</span><span class="mq-dot">●</span>
+      <span class="mq-item">Shadowing</span><span class="mq-dot">●</span>
+      <span class="mq-item">Transcript</span><span class="mq-dot">●</span>
+      <span class="mq-item">Review</span><span class="mq-dot">●</span>
+      <span class="mq-item">Repeat</span><span class="mq-dot">●</span>
+      <span class="mq-item">Dictation</span><span class="mq-dot">●</span>
+      <span class="mq-item">Listening</span><span class="mq-dot">●</span>
+      <span class="mq-item">Vocabulary</span><span class="mq-dot">●</span>
+      <span class="mq-item">Recitation</span><span class="mq-dot">●</span>
+      <span class="mq-item">Shadowing</span><span class="mq-dot">●</span>
+      <span class="mq-item">Transcript</span><span class="mq-dot">●</span>
+      <span class="mq-item">Review</span><span class="mq-dot">●</span>
+      <span class="mq-item">Repeat</span><span class="mq-dot">●</span>
     </div>
   </div>
   <div class="container">
     <div class="footnote">
-      <b>四步法</b>：① 选材料 · ② 逐字听写查词 · ③ 通篇背诵 · ④ 背到与原声同速。<br>
+      <b>四步法</b>：① 收集素材 · ② 盲听查词 · ③ 通篇背诵 · ④ 背到与原声同速。<br>
       进度、笔记、计时保存在当前电脑的浏览器里。换电脑用：先「导出进度」得到备份文件，拷到另一台电脑「导入进度」即可；音频文件（OGG/WAV）请随身携带、各电脑重新载入。
     </div>
   </div>
@@ -541,27 +558,20 @@
 <div class="topstrip"></div>
 <div class="study-head">
   <button class="back-btn" id="backBtn">← 返回首页</button>
-  <div class="study-title"><span class="logo-box sm">啃料</span><span>我的料</span><span class="mat-count" id="matHint"></span></div>
+  <div class="study-title"><span class="logo-box sm">Dictation</span><span>素材库</span><span class="mat-count" id="matHint"></span></div>
   <div class="study-live" id="studyLive">⏱ 学习中 00:00</div>
 </div>
 <div class="container study-wrap">
   <div class="study-pagehead">
-    <div class="eyebrow">STUDIO · 我的料台</div>
-    <h1 class="study-h1">今天，也啃透一点。</h1>
-    <p class="study-sub">每档材料走四步：载入音频 → 逐字听写 → 通篇背诵 → 背到原速。展开任意一档即可开始。</p>
+    <div class="eyebrow">STUDIO · 素材工作台</div>
+    <h1 class="study-h1">今天，也吃透一点。</h1>
+    <p class="study-sub">每份素材走四步：载入音频 → 盲听查词 → 通篇背诵 → 背到原速。展开任意一份即可开始。</p>
   </div>
   <div class="toolbar">
-    <button class="btn primary" id="addBtn">+ 添加一档 NPR 材料</button>
-    <a class="btn ghost" id="findBtn" href="https://www.npr.org/" target="_blank" rel="noopener">去 NPR 找料 ↗</a>
+    <button class="btn primary" id="addBtn">+ 添加一份素材</button>
     <button class="btn ghost" id="exportBtn">⬇ 导出进度</button>
     <button class="btn ghost" id="importBtn">⬆ 导入进度</button>
     <input type="file" id="importFile" accept="application/json,.json" style="display:none">
-  </div>
-  <div class="npr-hint">
-    点上面若打不开，手动复制到浏览器：
-    <span class="mono" id="nprUrlText">https://www.npr.org</span><button class="copybtn" id="copyNpr">复制</button><br>
-    基础起步推荐（短音频）：<span class="mono" style="user-select:all">npr.org/podcasts/510318/up-first</span> ·
-    <span class="mono" style="user-select:all">npr.org/sections/storycorps</span>
   </div>
   <div id="materials"></div>
 </div>
@@ -570,22 +580,22 @@
 <!-- ===== ADD MODAL ===== -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
-    <h2>添加一档 NPR 材料</h2>
-    <div class="sub">先去 NPR 挑一段你感兴趣、听得下去的音频，把文稿和链接贴进来。</div>
+    <h2>添加一份素材</h2>
+    <div class="sub">先挑一段你感兴趣、听得下去的英文音频，把文稿和链接贴进来。</div>
     <div class="tip" id="levelTip"></div>
     <div class="tip gray">🎧 音频请用 <b>OGG / WAV / Opus</b> 格式（内嵌浏览器不支持 MP3）。下载的是 mp3 也没关系——发给我，我帮你转成 ogg。</div>
     <div class="field"><label>标题（节目名 / 主题）</label><input id="fTitle" placeholder="例：Morning news brief — a short one"></div>
     <div class="two">
-      <div class="field"><label>NPR 原文链接（可选）</label><input id="fNpr" placeholder="https://www.npr.org/..."></div>
+      <div class="field"><label>原文链接（可选）</label><input id="fNpr" placeholder="https://..."></div>
       <div class="field"><label>音频页链接（可选，方便回去下载）</label><input id="fAudio" placeholder="音频页面地址"></div>
     </div>
     <div class="field"><label>音频时长（用于第 4 步"背到原速"的目标）</label>
       <input id="fDur" placeholder="例：4:30 （分:秒）；载入本地音频后会自动填写"></div>
     <div class="field"><label>文稿 / Transcript（听写核对与背诵用）</label>
-      <textarea id="fText" rows="5" placeholder="把 NPR 页面上的文字稿粘贴进来。听写时先不看，写完再来对照。"></textarea></div>
+      <textarea id="fText" rows="5" placeholder="把原文网页上的文字稿粘贴进来。听写时先不看，写完再来对照。"></textarea></div>
     <div class="modal-actions">
       <button class="btn ghost" id="cancelBtn">取消</button>
-      <button class="btn primary" id="saveBtn">加入我的料</button>
+      <button class="btn primary" id="saveBtn">加入素材库</button>
     </div>
   </div>
 </div>
@@ -595,14 +605,14 @@
 /* ---------------- storage ---------------- */
 const KEY = "kenliao_state_v1";
 const STEP_DEFS = [
-  {k:"select", num:"步骤 1", t:"选材料", d:"找到感兴趣、难度合适的 NPR 音频，下载/收藏它。加入这里即视为完成。"},
-  {k:"dictation", num:"步骤 2", t:"精听 + 逐字听写", d:"不看文稿，一个字一个字把它听写出来，生词逐个查字典，直到完全听懂。"},
+  {k:"select", num:"步骤 1", t:"收集素材", d:"找到感兴趣、难度合适的英文音频，下载/收藏它。加入这里即视为完成。"},
+  {k:"dictation", num:"步骤 2", t:"盲听查词", d:"不看文稿，一个字一个字把它听写出来，生词逐个查字典，直到完全听懂。"},
   {k:"recite", num:"步骤 3", t:"通篇背诵", d:"在单词、语法全部理解之后，把整篇从头背到尾。"},
   {k:"speed", num:"步骤 4", t:"背到与原声同速", d:"反复练到能以音频本身的语速脱口而出——语感就是这样练出来的。"}
 ];
 const REVIEW_INTERVALS=[1,2,4,7,15]; // days
 const LEVEL_TIPS={
-  beginner:"你的基础偏弱：从 NPR 里挑<b>短</b>的（3–5 分钟）、语速慢一点的段落起步，比如 “Up First” 的单条新闻、StoryCorps 短故事。别一上来就啃长访谈。",
+  beginner:"你的基础偏弱：先挑<b>短</b>的（3–5 分钟）、语速慢一点的音频起步，比如短新闻、小故事类节目。别一上来就挑战长访谈。",
 };
 
 function load(){
@@ -661,17 +671,8 @@ function render(){
 }
 
 function renderHeader(){
-  const goal=state.settings.goal;
-  const done=state.materials.filter(isDone).length;
   const inprog=state.materials.filter(m=>!isDone(m)&&stepsDone(m)>0).length;
-  $("#goalCount").textContent=goal;
-  $("#doneCount").textContent=done;
   $("#onairCount").textContent=inprog;
-  const pct=Math.min(100, done/goal*100);
-  $("#dialFill").style.width=pct+"%";
-  $("#dialNeedle").style.left=pct+"%";
-  // ticks
-  const tk=$("#dialTicks");if(!tk.childElementCount){for(let i=0;i<goal;i++)tk.appendChild(el("span"));}
 }
 
 function renderStats(){
@@ -680,7 +681,7 @@ function renderStats(){
   $("#statDone").innerHTML=state.materials.filter(isDone).length+'<small> 篇</small>';
   const due=state.materials.filter(m=>{const r=reviewInfo(m);return r&&r.due;}).length;
   $("#statReview").innerHTML=due+'<small> 篇待复习</small>';
-  $("#matHint").textContent=state.materials.length? state.materials.length+" 档在库" : "";
+  $("#matHint").textContent=state.materials.length? state.materials.length+" 份在库" : "";
 }
 
 function renderReview(){
@@ -691,7 +692,7 @@ function renderReview(){
   const soon=items.filter(x=>!x.r.due).slice(0,2);
   const show=[...due,...soon];
   if(show.length===0){
-    list.appendChild(el("div","empty","还没有可复习的料。背完第 3 步（通篇背诵）后，这里会按遗忘曲线提醒你回炉。"));
+    list.appendChild(el("div","empty","还没有可复习的素材。背完第 3 步（通篇背诵）后，这里会按遗忘曲线提醒你回炉。"));
     return;
   }
   show.forEach(({m,r})=>{
@@ -716,9 +717,9 @@ function renderMaterials(){
   if(state.materials.length===0){
     const e=el("div","empty empty-lg");
     e.appendChild(el("div","empty-emoji","📻"));
-    e.appendChild(el("div","empty-t","你的料台还空着"));
-    e.appendChild(el("div","empty-d","挑一段 3–5 分钟的 NPR 短音频，从这里开始你的第一篇。"));
-    const b=el("button","btn primary","+ 添加第一档材料");
+    e.appendChild(el("div","empty-t","你的素材库还空着"));
+    e.appendChild(el("div","empty-d","挑一段 3–5 分钟的英文短音频，从这里开始你的第一篇。"));
+    const b=el("button","btn primary","+ 添加第一份素材");
     b.style.marginTop="20px";
     b.onclick=openModal;
     e.appendChild(b);
@@ -750,7 +751,7 @@ function trackEl(m,i){
   const meta=el("div","track-meta");
   meta.innerHTML = (m.durSec?('<span>⏱ '+fmtDur(m.durSec)+'</span>'):'') +
     (m.audioName?('<span>🎧 音频已载入</span>'):'') +
-    (m.nprUrl?('<span><a href="'+escapeAttr(m.nprUrl)+'" target="_blank" rel="noopener">NPR 原文 ↗</a></span>'):'') +
+    (m.nprUrl?('<span><a href="'+escapeAttr(m.nprUrl)+'" target="_blank" rel="noopener">原文 ↗</a></span>'):'') +
     (m.audioUrl?('<span><a href="'+escapeAttr(m.audioUrl)+'" target="_blank" rel="noopener">音频页 ↗</a></span>'):'') +
     (m.vocab&&m.vocab.length?('<span>📖 '+m.vocab.length+' 生词</span>'):'') +
     '<span>已投入 '+m.log.reduce((s,l)=>s+l.minutes,0)+' 分钟</span>';
@@ -800,7 +801,7 @@ function buildBody(m,wrap,body){
 
   // ---- 删除（学习时间已由进入学习页自动计时）----
   const log=el("div","log-row");
-  const del=el("button","del","删除这档");
+  const del=el("button","del","删除这份素材");
   del.onclick=()=>{if(confirm("确定删除「"+m.title+"」？此操作无法撤销。")){
     const u=audioURLCache[m.id];if(u&&u.indexOf("blob:")===0)URL.revokeObjectURL(u);delete audioURLCache[m.id];
     idbDel(m.id);
@@ -901,7 +902,7 @@ function tempoEl(m){
     }
     box.appendChild(el("div","tempo-note",note));
   } else {
-    box.appendChild(el("div","tempo-note","想用「背到原速」计时器？在材料信息里补上音频时长即可对照。"));
+    box.appendChild(el("div","tempo-note","想用「背到原速」计时器？在素材信息里补上音频时长即可对照。"));
   }
   return box;
 }
@@ -977,7 +978,7 @@ function buildPlayer(m,wrap){
     label.appendChild(inp);
     box.appendChild(label);
     box.appendChild(el("div","player-hint",
-      '⚠ 本卡片的内嵌浏览器<b>不支持 MP3</b>，请载入 <b>OGG / WAV / Opus</b> 格式。<br>把 NPR 音频下载后，若是 mp3，可让我帮你转成 ogg，再从这里选择本地文件。文件存在本机，下次打开还在。'));
+      '⚠ 本卡片的内嵌浏览器<b>不支持 MP3</b>，请载入 <b>OGG / WAV / Opus</b> 格式。<br>音频下载后若是 mp3，可让我帮你转成 ogg，再从这里选择本地文件。文件存在本机，下次打开还在。'));
     return box;
   }
 
@@ -1227,7 +1228,7 @@ function renderTranscriptSection(m,box){
     box.appendChild(lock);
   }else{
     const bar=el("div","tunlock-bar");
-    bar.appendChild(el("span",null,"🔓 已解锁 · 点单词查词；标红为已收藏的生词/词组"));
+    bar.appendChild(el("span",null,"🔓 已解锁 · 点单词查词；标绿为已收藏的生词/词组"));
     const rb=el("button","tlock-relock","重新锁定");
     rb.onclick=()=>{m._unlocked=false;renderTranscriptSection(m,box);};
     bar.appendChild(rb);
@@ -1302,17 +1303,16 @@ function renderCharts(){
   const done=state.materials.filter(isDone).length;
   const inprog=state.materials.filter(m=>!isDone(m)&&stepsDone(m)>0).length;
   const goal=state.settings.goal;
-  const remaining=Math.max(0, goal-done-inprog);
   const started=state.materials.length;
   const notyet=Math.max(0, goal-Math.max(started,done+inprog));
 
   const jData=[done, inprog, notyet];
-  $("#journeyLegend").innerHTML='<span style="color:#58cc02">■</span> 已上线 &nbsp; <span style="color:#a5ed6e">■</span> 进行中 &nbsp; <span style="color:#e5e5e5">■</span> 待开始';
+  $("#journeyLegend").innerHTML='<span style="color:#58cc02">■</span> 已完成 &nbsp; <span style="color:#a5ed6e">■</span> 进行中 &nbsp; <span style="color:#e5e5e5">■</span> 待开始';
 
   if(!journeyChart){
     journeyChart=new Chart($("#journeyChart"),{
       type:"doughnut",
-      data:{labels:["已上线","进行中","待开始"],
+      data:{labels:["已完成","进行中","待开始"],
         datasets:[{data:jData,backgroundColor:["#58cc02","#a5ed6e","#e5e5e5"],borderWidth:3,borderColor:"#fff"}]},
       options:{responsive:true,maintainAspectRatio:false,cutout:"64%",
         plugins:{legend:{display:false},
@@ -1351,7 +1351,7 @@ $("#exportBtn").onclick=()=>{
   const data=JSON.stringify(state,(k,v)=>k==="_open"?undefined:v,2);
   const blob=new Blob([data],{type:"application/json"});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");a.href=url;a.download="啃料电台-进度备份-"+today()+".json";
+  const a=document.createElement("a");a.href=url;a.download="Dictation工作台-进度备份-"+today()+".json";
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1500);
 };
@@ -1368,7 +1368,7 @@ $("#importFile").onchange=()=>{
       if(!state.settings)state.settings={goal:10,level:"beginner"};
       state.materials.forEach(m=>{m._open=false;});
       save();render();
-      alert("导入成功！共 "+state.materials.length+" 档材料。音频请在本机各档里重新载入。");
+      alert("导入成功！共 "+state.materials.length+" 份素材。音频请在本机各份素材里重新载入。");
     }catch(e){alert("无法识别该文件，请选择本 app 导出的 .json 备份。");}
     $("#importFile").value="";
   };
@@ -1376,18 +1376,6 @@ $("#importFile").onchange=()=>{
 };
 $("#cancelBtn").onclick=closeModal;
 $("#modalBg").onclick=e=>{if(e.target===$("#modalBg"))closeModal();};
-$("#copyNpr").onclick=()=>{
-  const txt="https://www.npr.org";const btn=$("#copyNpr");
-  const done=()=>{btn.textContent="已复制 ✓";setTimeout(()=>btn.textContent="复制",1500);};
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done));
-  }else{fallbackCopy(txt,done);}
-};
-function fallbackCopy(txt,cb){
-  try{const ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";
-    document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);cb&&cb();}
-  catch(e){/* worst case: user selects the mono text manually */}
-}
 $("#saveBtn").onclick=()=>{
   const title=$("#fTitle").value.trim();
   if(!title){$("#fTitle").focus();$("#fTitle").style.borderColor="var(--danger)";return;}
