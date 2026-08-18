@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>啃料 10 · NPR 英语精修</title>
+<title>Dictation 工作台——收集素材、盲听查词、记录每一篇的听写进度</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
-<!-- Firebase (邮箱登录 + 云同步)。GitHub Pages 上正常加载；在 Cowork 卡片沙盒中会被拦截，此时自动降级为仅本机模式。 -->
+<!-- Firebase (登录 + 云同步)。GitHub Pages 上正常加载；在 Cowork 卡片沙盒中会被拦截，此时 app 自动降级为仅本机模式。 -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -13,19 +13,27 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
+  /* ================= Duolingo CN Light · 设计规范落地 ================= */
   :root{
     color-scheme:light;
-    --surface-white:#ffffff; --body-text:#3c3c3c; --brand-green:#58cc02;
-    --disabled-text:#afafaf; --green-light:#a5ed6e; --green-pale:#d7ffb8;
-    --muted-text:#777777; --secondary-text:#4b4b4b; --sky-blue:#1cb0f6;
+    --surface-white:#ffffff;
+    --body-text:#3c3c3c;
+    --brand-green:#58cc02;
+    --disabled-text:#afafaf;
+    --green-light:#a5ed6e;
+    --green-pale:#d7ffb8;
+    --muted-text:#777777;
+    --secondary-text:#4b4b4b;
+    --sky-blue:#1cb0f6;
     --border-subtle:#e5e5e5;
     --green-d:#58a700; --green-h:#61d904; --blue-d:#1899d6;
     --snow:#f7f7f7; --danger:#ff4b4b;
     --bg:var(--surface-white); --card:var(--surface-white);
     --ink:var(--body-text); --head:var(--secondary-text);
     --muted:var(--muted-text); --disabled:var(--disabled-text);
-    --line:var(--border-subtle); --green:var(--brand-green); --blue:var(--sky-blue);
-    --r:12px;
+    --line:var(--border-subtle); --green:var(--brand-green);
+    --blue:var(--sky-blue);
+    --r:12px; --r-sm:2px;
     --font:"Nunito",ui-rounded,"SF Pro Rounded","Quicksand","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
     --mono:ui-monospace,"SF Mono","Menlo","Consolas",monospace;
   }
@@ -35,16 +43,16 @@
   a{color:var(--blue);text-decoration:none;font-weight:700;}
   a:hover{text-decoration:underline;}
   button{font-family:inherit;cursor:pointer;}
-  button:disabled{opacity:.55;cursor:default;}
   h1,h2,h3{margin:0;font-weight:800;color:var(--head);}
   ::selection{background:var(--green-pale);}
   :focus-visible{outline:3px solid var(--green-light);outline-offset:2px;}
   .mono{font-family:var(--mono);}
+
   .container{max-width:1080px;margin:0 auto;padding:0 32px;width:100%;}
   .container.narrow{max-width:820px;}
   .center{text-align:center;}
 
-  /* ========== 按钮体系 ========== */
+  /* ================= 按钮体系(规范:12px 圆角 + 4px 底边) ================= */
   .btn{border:none;border-radius:var(--r);padding:13px 24px;font-size:15px;font-weight:800;letter-spacing:.8px;transition:transform .08s,background .15s;}
   .btn.primary{background:var(--green);color:#fff;border-bottom:4px solid var(--green-d);}
   .btn.primary:hover{background:var(--green-h);}
@@ -62,7 +70,7 @@
   .copybtn{font-family:var(--font);font-size:12px;font-weight:800;border:2px solid var(--line);background:#fff;color:var(--muted);padding:3px 10px;border-radius:8px;margin-left:6px;}
   .copybtn:hover{border-color:var(--green);color:var(--green);}
 
-  /* ========== 顶部 ========== */
+  /* ================= 顶部 ================= */
   .topstrip{height:4px;background:var(--green);}
   .nav{position:sticky;top:0;z-index:30;background:#fff;border-bottom:2px solid var(--line);}
   .nav-inner{max-width:1080px;margin:0 auto;padding:0 32px;height:76px;display:flex;align-items:center;gap:32px;}
@@ -83,7 +91,7 @@
   .synced.ok{color:var(--green);}
   .synced.err{color:var(--danger);}
 
-  /* ========== HERO ========== */
+  /* ================= HERO ================= */
   .hero{min-height:calc(100vh - 80px);display:flex;align-items:center;padding:48px 0 64px;}
   .hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;}
   .hero-art{position:relative;aspect-ratio:1/1;max-width:460px;width:100%;margin:0 auto;}
@@ -99,11 +107,10 @@
   @keyframes float{from{transform:translateY(-6px)}to{transform:translateY(8px)}}
   .eyebrow{font-size:13px;font-weight:800;color:var(--green);letter-spacing:.14em;}
   .hero-copy h1{font-size:clamp(32px,4.2vw,48px);font-weight:800;color:var(--head);line-height:1.22;letter-spacing:-.01em;margin:20px 0 0;}
-  .hero-sub{font-size:17px;font-weight:500;line-height:28px;color:var(--muted);max-width:460px;margin:28px 0 40px;}
-  .hero-cta{display:flex;gap:16px;flex-wrap:wrap;}
+  .hero-cta{display:flex;gap:16px;flex-wrap:wrap;margin-top:40px;}
   .hero-note{font-size:13px;color:var(--disabled);font-weight:600;margin-top:24px;letter-spacing:.02em;}
 
-  /* ========== 屏幕分区 ========== */
+  /* ================= 屏幕分区 ================= */
   .screen{padding:96px 0;scroll-margin-top:84px;border-top:2px solid var(--line);}
   .screen.tall{min-height:88vh;display:flex;align-items:center;padding:64px 0;}
   .sec-head{margin-bottom:56px;}
@@ -112,23 +119,23 @@
   .sec-title{font-size:32px;font-weight:800;color:var(--head);line-height:1.3;margin:20px 0 12px;}
   .sec-sub{font-size:17px;font-weight:500;line-height:26px;color:var(--muted);max-width:560px;}
   .sec-head.center .sec-sub{margin:0 auto;}
-  .journey-count{font-size:48px;font-weight:800;color:var(--head);margin-top:24px;line-height:1;}
-  .journey-count b{color:var(--green);}
-  .journey-count .jc-sep{color:var(--disabled);margin:0 10px;font-weight:700;}
-  .journey-count .jc-unit{font-size:17px;color:var(--muted);font-weight:700;margin-left:14px;}
-  .journey-sub{margin:20px auto 0;}
-  .season-bar{height:26px;max-width:720px;margin:48px auto 0;background:var(--line);position:relative;overflow:hidden;border-radius:100px;}
-  .season-fill{position:absolute;left:0;top:0;height:100%;background:var(--green);border-radius:100px;transition:width .5s ease;}
-  .season-needle{display:none;}
-  .season-ticks{position:absolute;inset:0;display:flex;pointer-events:none;}
-  .season-ticks span{flex:1;border-right:2px solid rgba(255,255,255,.75);}
-  .season-ticks span:last-child{border-right:none;}
+
+  /* ================= 功能介绍 2×2 ================= */
+  .feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .fcard{background:#fff;border:2px solid var(--line);border-radius:var(--r);padding:36px 32px;display:flex;gap:20px;align-items:flex-start;transition:border-color .2s,transform .2s;}
+  .fcard:hover{border-color:var(--green-light);transform:translateY(-4px);}
+  .fcard-ic{width:52px;height:52px;border-radius:var(--r);background:var(--green-pale);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+  .fcard h3{font-size:19px;font-weight:800;color:var(--head);margin-bottom:8px;}
+  .fcard p{font-size:14px;font-weight:500;line-height:22px;color:var(--muted);}
+  @media(max-width:768px){.feat-grid{grid-template-columns:1fr;}.fcard{padding:28px 22px;}}
+
   .method-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;}
   .mcard{background:#fff;border:2px solid var(--line);border-radius:var(--r);padding:36px 28px;transition:border-color .2s,transform .2s;}
   .mcard:hover{border-color:var(--green-light);transform:translateY(-4px);}
   .mcard-n{width:44px;height:44px;border-radius:50%;background:var(--green);color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
   .mcard h3{font-size:19px;font-weight:800;color:var(--head);line-height:26.6px;margin-bottom:10px;}
   .mcard p{font-size:14px;font-weight:500;line-height:22px;color:var(--muted);}
+
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;}
   .stat{background:#fff;border:2px solid var(--line);border-radius:var(--r);padding:28px;}
   .stat .k{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em;}
@@ -140,6 +147,7 @@
   .box h3{font-size:15px;font-weight:800;color:var(--head);margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
   .box h3 span{font-size:12px;color:var(--disabled);font-weight:600;}
   .chart-holder{position:relative;height:240px;}
+
   .review-list{display:flex;flex-direction:column;gap:16px;}
   .review-item{display:flex;align-items:center;gap:16px;padding:20px 24px;background:#fff;border:2px solid var(--line);border-radius:var(--r);}
   .review-item .rt{flex:1;min-width:0;}
@@ -154,6 +162,7 @@
   .empty-t{font-size:19px;font-weight:800;color:var(--head);margin-bottom:8px;}
   .empty-d{font-size:14px;color:var(--muted);font-weight:500;}
   .center-cta{text-align:center;margin-top:40px;}
+
   .footer{border-top:2px solid var(--line);}
   .marquee{overflow:hidden;border-bottom:2px solid var(--line);background:#fff;}
   .marquee-track{display:flex;align-items:center;gap:56px;width:max-content;padding:20px 0;animation:mq 36s linear infinite;}
@@ -163,7 +172,7 @@
   .footnote{color:var(--disabled);font-size:14px;line-height:2;max-width:760px;margin:0 auto;padding:64px 0;text-align:center;font-weight:500;}
   .footnote b{color:var(--muted);}
 
-  /* ========== 学习页 ========== */
+  /* ================= 学习页 ================= */
   .study-head{background:#fff;border-bottom:2px solid var(--line);display:flex;align-items:center;gap:16px;padding:16px 32px;position:sticky;top:0;z-index:20;}
   .back-btn{border:2px solid var(--line);border-bottom:4px solid var(--line);background:#fff;color:var(--ink);font-size:13px;font-weight:800;padding:10px 16px;border-radius:var(--r);cursor:pointer;white-space:nowrap;letter-spacing:.03em;}
   .back-btn:hover{background:var(--snow);}
@@ -177,8 +186,8 @@
   .study-h1{font-size:32px;font-weight:800;color:var(--head);line-height:1.25;margin:14px 0 10px;}
   .study-sub{font-size:15px;color:var(--muted);font-weight:500;line-height:1.6;}
   .toolbar{display:flex;gap:14px;align-items:center;margin-bottom:24px;flex-wrap:wrap;}
-  .npr-hint{font-size:14px;color:var(--muted);margin:0 0 40px;line-height:2.1;font-weight:600;background:#fff;border:2px solid var(--line);border-radius:var(--r);padding:20px 24px;}
-  .npr-hint .mono{background:var(--snow);border:2px solid var(--line);border-radius:8px;padding:2px 8px;user-select:all;color:var(--ink);font-weight:700;font-size:13px;}
+
+  /* ---------- 素材卡片 ---------- */
   .track{background:#fff;border:2px solid var(--line);border-radius:var(--r);margin-bottom:24px;overflow:hidden;transition:border-color .2s;}
   .track:hover{border-color:#d4d4d4;}
   .track.open{border-color:var(--green);}
@@ -197,6 +206,7 @@
   .ladder-pct{font-size:13px;font-weight:800;color:var(--head);margin-left:6px;}
   .track-body{display:none;border-top:2px solid var(--line);padding:28px;}
   .track.open .track-body{display:block;}
+
   .steps{display:flex;flex-direction:column;gap:0;margin-top:4px;}
   .step{display:flex;gap:16px;padding:16px 4px;border-bottom:2px solid var(--snow);}
   .step:last-child{border-bottom:none;}
@@ -207,12 +217,14 @@
   .step-t .num{font-size:11px;font-weight:800;color:var(--green-d);background:var(--green-pale);padding:3px 10px;border-radius:100px;letter-spacing:.04em;}
   .step.done .step-t{color:var(--green);}
   .step-d{font-size:13px;color:var(--muted);margin-top:6px;font-weight:500;line-height:1.65;}
+
   .field{margin-top:24px;}
   .field label{font-size:13px;font-weight:800;color:var(--head);display:block;margin-bottom:8px;letter-spacing:.03em;}
   .field textarea,.field input,.field select{width:100%;border:2px solid var(--line);border-radius:var(--r);padding:13px 16px;font-family:inherit;font-size:15px;font-weight:500;background:#fff;color:var(--ink);}
   .field textarea{resize:vertical;min-height:96px;line-height:1.7;}
   .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--green);}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
   .tsec{margin-top:28px;}
   .tlock{border:2px dashed var(--line);border-radius:var(--r);background:var(--snow);padding:40px 24px;text-align:center;}
   .tlock-ic{font-size:32px;}
@@ -228,6 +240,7 @@
   .transcript .w:hover{background:var(--green-pale);color:var(--green-d);}
   .transcript .w.hit{background:var(--green-pale);color:var(--green-d);font-weight:700;}
   .transcript .w.hit:hover{background:#c6f79e;}
+
   .tempo{background:var(--snow);border:2px solid var(--line);border-radius:var(--r);padding:24px;margin-top:24px;}
   .tempo-top{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
   .timer-display{font-family:var(--mono);font-size:34px;font-weight:800;color:var(--head);}
@@ -237,6 +250,7 @@
   .tempo-meter .target{position:absolute;top:-4px;height:24px;width:3px;background:var(--head);border-radius:2px;}
   .tempo-legend{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:8px;font-weight:700;}
   .tempo-note{font-size:14px;color:var(--muted);margin-top:12px;font-weight:500;line-height:1.65;}
+
   .player{background:var(--snow);border:2px solid var(--line);border-radius:var(--r);padding:24px;color:var(--ink);}
   .player-empty{display:flex;flex-direction:column;gap:12px;}
   .player-empty .lbl{font-size:15px;color:var(--head);font-weight:800;}
@@ -247,9 +261,12 @@
   .player-hint b{color:var(--green-d);}
   .pl-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
   .pl-name{font-size:13px;color:var(--muted);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;}
-  .pl-btn.sm{width:36px;height:36px;border-radius:50%;font-size:12px;font-weight:800;background:#fff;color:var(--ink);border:2px solid var(--line);border-bottom:3px solid var(--line);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
-  .pl-btn.sm:active{transform:translateY(2px);border-bottom-width:1px;}
+  .pl-btn{width:42px;height:42px;border-radius:50%;border:none;background:var(--green);color:#fff;font-size:15px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-bottom:3px solid var(--green-d);}
+  .pl-btn:active{transform:translateY(2px);border-bottom-width:1px;}
+  .pl-btn.sm{width:36px;height:36px;font-size:12px;font-weight:800;background:#fff;color:var(--ink);border:2px solid var(--line);border-bottom:3px solid var(--line);}
   .pl-btn.sm.on{background:var(--green);color:#fff;border-color:var(--green);border-bottom-color:var(--green-d);}
+  .pl-seek{flex:1;min-width:120px;accent-color:var(--green);cursor:pointer;height:6px;}
+  .pl-time{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap;font-weight:700;}
   .pl-speeds{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;}
   .pl-speeds .slbl{font-size:12px;color:var(--muted);font-weight:800;}
   .spd{font-family:var(--mono);font-size:12px;border:2px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:6px 12px;cursor:pointer;font-weight:700;}
@@ -257,9 +274,13 @@
   .spd.on{background:var(--green);color:#fff;border-color:var(--green);}
   .pl-chg{font-size:13px;color:var(--muted);background:none;border:none;text-decoration:underline;cursor:pointer;font-weight:700;}
   .pl-chg:hover{color:var(--green);}
+
   .log-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:24px;}
+  .log-row input{width:90px;border:2px solid var(--line);border-radius:var(--r);padding:9px 12px;font-family:var(--mono);}
+  .study-time{font-family:var(--mono);font-size:16px;font-weight:800;color:var(--head);min-width:52px;}
   .del{margin-left:auto;background:none;border:none;color:var(--disabled);font-size:13px;text-decoration:underline;font-weight:700;}
   .del:hover{color:var(--danger);}
+
   .vocab{margin-top:28px;border-top:2px solid var(--line);padding-top:24px;}
   .vocab-title{font-size:14px;font-weight:800;color:var(--head);margin-bottom:12px;letter-spacing:.03em;}
   .vocab-search{display:flex;gap:10px;}
@@ -281,9 +302,12 @@
   .rescard .rw{font-size:18px;font-weight:800;color:var(--head);}
   .rescard .rph{font-family:var(--mono);font-size:13px;color:var(--muted);margin-left:10px;font-weight:600;}
   .rescard .rpos{font-size:11px;font-weight:800;color:var(--green-d);background:var(--green-pale);display:inline-block;padding:3px 10px;border-radius:100px;margin-top:8px;}
+  .rescard .rcn{font-size:15px;font-weight:800;color:var(--head);margin-top:8px;}
   .rescard .rdef{font-size:14px;color:var(--ink);margin-top:6px;font-weight:500;line-height:1.6;}
   .rescard .rex{font-size:13px;color:var(--muted);font-style:italic;margin-top:6px;line-height:1.6;}
   .rescard .rrow{display:flex;gap:14px;align-items:center;margin-top:14px;flex-wrap:wrap;}
+  .say{border:none;background:var(--green);color:#fff;border-radius:50%;width:34px;height:34px;font-size:12px;cursor:pointer;flex-shrink:0;border-bottom:3px solid var(--green-d);}
+  .say:active{transform:translateY(2px);border-bottom-width:1px;}
   .saybtn{border:none;background:var(--green);color:#fff;border-radius:var(--r);padding:9px 16px;font-size:13px;font-weight:800;cursor:pointer;border-bottom:3px solid var(--green-d);}
   .saybtn:active{transform:translateY(2px);border-bottom-width:1px;}
   .ydlink{font-size:13px;font-weight:800;color:var(--blue);}
@@ -294,7 +318,7 @@
   .vocab-list{display:flex;flex-direction:column;gap:10px;}
   .vocab-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid var(--line);border-radius:var(--r);background:#fff;}
   .vocab-item.mastered{opacity:.5;}
-  .vocab-item .vw{font-weight:800;font-size:14px;color:var(--head);flex-shrink:0;cursor:pointer;}
+  .vocab-item .vw{font-weight:800;font-size:14px;color:var(--head);flex-shrink:0;}
   .vocab-item .vph{font-family:var(--mono);font-size:11px;color:var(--muted);flex-shrink:0;}
   .vocab-item .vd{flex:1;min-width:0;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;}
   .vocab-item .vbtn{border:none;background:none;cursor:pointer;font-size:13px;color:var(--disabled);padding:2px 5px;text-decoration:none;flex-shrink:0;font-weight:700;}
@@ -303,7 +327,6 @@
   .vocab-empty{font-size:14px;color:var(--muted);padding:12px 0;font-weight:500;line-height:1.6;}
   .lookup-pop{position:absolute;z-index:80;background:#fff;border:2px solid var(--green);border-radius:var(--r);box-shadow:0 0 5px rgba(128,128,128,.5);padding:14px;}
 
-  /* ========== 弹窗 ========== */
   .modal-bg{position:fixed;inset:0;background:rgba(60,60,60,.5);display:none;align-items:flex-start;justify-content:center;padding:40px 20px;z-index:50;overflow:auto;}
   .modal-bg.show{display:flex;}
   .modal{background:#fff;border-radius:var(--r);max-width:600px;width:100%;padding:36px;border:2px solid var(--line);}
@@ -311,45 +334,73 @@
   .modal .sub{font-size:15px;color:var(--muted);margin-bottom:12px;font-weight:500;line-height:1.65;}
   .tip{background:var(--green-pale);border:2px solid #bdec93;border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--green-d);margin:14px 0;line-height:1.7;font-weight:600;}
   .tip.gray{background:var(--snow);border-color:var(--line);color:var(--muted);}
-  .modal-actions{display:flex;gap:14px;justify-content:flex-end;margin-top:28px;flex-wrap:wrap;}
-  .atabs{display:flex;gap:12px;margin:20px 0 4px;}
-  .atab{flex:1;padding:11px;border:2px solid var(--line);border-bottom-width:4px;border-radius:var(--r);background:#fff;font-weight:800;font-size:14px;color:var(--muted);cursor:pointer;letter-spacing:.05em;}
-  .atab.on{border-color:var(--green);color:var(--green);background:var(--green-pale);}
-  .aerr,.aok{border-radius:var(--r);padding:12px 16px;font-size:13px;font-weight:700;margin-top:14px;display:none;line-height:1.6;}
-  .aerr{background:#ffecec;border:2px solid #ffc9c9;color:#d33;}
-  .aok{background:var(--green-pale);border:2px solid #bdec93;color:var(--green-d);}
-  .aerr.show,.aok.show{display:block;}
-  .abtn-row{margin-top:22px;display:flex;flex-direction:column;gap:12px;}
-  .abtn-row .btn{width:100%;}
-  .flink{font-size:12px;color:var(--blue);font-weight:700;cursor:pointer;background:none;border:none;padding:0;text-decoration:underline;}
-  .flink:hover{color:var(--blue-d);}
-  .reconfig{background:none;border:none;color:var(--disabled);font-size:12px;font-weight:700;text-decoration:underline;cursor:pointer;margin-top:16px;display:inline-block;padding:0;}
-  .reconfig:hover{color:var(--green);}
-  .guide{border:2px solid var(--line);border-radius:var(--r);margin:16px 0;overflow:hidden;}
-  .guide summary{padding:14px 18px;font-weight:800;font-size:14px;color:var(--head);cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;}
-  .guide summary::-webkit-details-marker{display:none;}
-  .guide summary::after{content:"▶";margin-left:auto;font-size:11px;color:var(--disabled);transition:transform .2s;}
-  .guide[open] summary::after{transform:rotate(90deg);}
-  .guide-body{padding:0 18px 18px;font-size:14px;line-height:1.9;color:var(--ink);font-weight:500;}
-  .guide-body ol{margin:0;padding-left:20px;}
-  .guide-body li{margin-bottom:10px;}
-  .guide-body b{color:var(--head);}
-  .codebox{font-family:var(--mono);font-size:11.5px;background:#fff;border:2px solid var(--line);border-radius:10px;padding:10px 12px;white-space:pre;overflow:auto;max-height:170px;margin-top:8px;user-select:all;line-height:1.6;color:var(--ink);}
+  .modal-actions{display:flex;gap:14px;justify-content:flex-end;margin-top:28px;}
 
-  /* ========== 响应式 ========== */
+
+  /* ================= 听写工作台 Dictation Workspace ================= */
+  .dw{margin-top:28px;background:#fff;border:2px solid var(--line);border-radius:var(--r);overflow:hidden;}
+  .dw-head{display:flex;align-items:center;gap:14px;padding:15px 20px;background:var(--green-pale);border-bottom:2px solid #bdec93;flex-wrap:wrap;}
+  .dw-h{font-size:15px;font-weight:800;color:var(--green-d);}
+  .dw-prog{flex:1;min-width:110px;height:10px;border-radius:100px;background:#fff;overflow:hidden;border:1px solid #bdec93;}
+  .dw-prog i{display:block;height:100%;width:0;background:var(--green);border-radius:100px;transition:width .25s;}
+  .dw-pct{font-size:13px;font-weight:800;color:var(--green-d);font-family:var(--mono);}
+  .dw-body{padding:20px;}
+  .dw-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .dw-counter{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--muted);}
+  .dw-loop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--snow);border:2px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;}
+  .dw-loop .lbl{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.04em;}
+  .dw-range{font-family:var(--mono);font-size:12px;color:var(--muted);font-weight:700;}
+  .dw-ta{width:100%;min-height:108px;border:2px solid var(--line);border-radius:var(--r);padding:14px 16px;font-family:var(--font);font-size:17px;font-weight:500;line-height:1.75;color:var(--ink);resize:vertical;background:#fff;}
+  .dw-ta:focus{outline:none;border-color:var(--green);}
+  .dw-acts{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center;}
+  .dw-tip{font-size:12.5px;color:var(--muted);font-weight:600;line-height:1.6;}
+  .dw-res{margin-top:16px;border:2px solid var(--line);border-radius:var(--r);padding:16px 18px;background:var(--snow);}
+  .dw-score{font-size:15px;font-weight:800;margin-bottom:12px;}
+  .dw-score.good{color:var(--green-d);}
+  .dw-score.mid{color:#b57900;}
+  .dw-score.bad{color:var(--danger);}
+  .dw-line{font-size:16px;line-height:1.95;margin-bottom:12px;}
+  .dw-line .k{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--muted);margin-bottom:3px;}
+  .dw-w{padding:0 2px;border-radius:5px;}
+  .dw-w.miss{background:#ffdede;color:#d02b2b;font-weight:800;cursor:pointer;}
+  .dw-w.miss:hover{background:#ffc9c9;}
+  .dw-w.extra{color:var(--disabled);text-decoration:line-through;}
+  .dw-missrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px;}
+  .dw-missrow .lbl{font-size:12.5px;font-weight:800;color:var(--muted);}
+  .dw-chip{background:#fff;border:2px solid var(--line);border-bottom-width:3px;border-radius:100px;padding:6px 13px;font-size:13.5px;font-weight:800;color:var(--ink);font-family:inherit;cursor:pointer;}
+  .dw-chip:hover{border-color:var(--green);color:var(--green-d);}
+  .dw-empty{padding:8px 0 4px;color:var(--muted);font-size:14px;font-weight:600;line-height:1.75;}
+  .dw-dots{display:flex;flex-wrap:wrap;gap:5px;margin-top:16px;}
+  .dw-dot{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);background:#fff;font-size:10px;font-weight:800;color:var(--disabled);display:flex;align-items:center;justify-content:center;padding:0;font-family:var(--mono);cursor:pointer;}
+  .dw-dot.part{background:#ffe0b2;border-color:#f0b95c;color:#8a5a00;}
+  .dw-dot.done{background:var(--green);border-color:var(--green);color:#fff;}
+  .dw-dot.cur{outline:3px solid var(--green-light);outline-offset:1px;}
+  .dw-dotlbl{font-size:12px;font-weight:700;color:var(--muted);margin-top:10px;}
+  .dw-done{background:var(--green-pale);border:2px solid #bdec93;border-radius:var(--r);padding:14px 16px;margin-top:16px;font-size:14px;font-weight:700;color:var(--green-d);line-height:1.7;}
+  .dw-chip:disabled{opacity:.35;cursor:default;}
+  .dw-chip:disabled:hover{border-color:var(--line);color:var(--ink);}
+
+  /* ================= 响应式 ================= */
   @media(min-width:1024px){
     .track.open .track-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:40px;row-gap:28px;align-items:start;}
-    .track-body>.player,.track-body>.steps,.track-body>.tempo,.track-body>.log-row,.track-body>.field,.track-body>.vocab,.track-body>.tsec{margin-top:0;}
+    .track-body>.player,.track-body>.steps,.track-body>.tempo,.track-body>.log-row,.track-body>.field,.track-body>.vocab,.track-body>.tsec,.track-body>.dw{margin-top:0;}
     .track-body>.player{grid-column:1;grid-row:1;}
-    .track-body>.steps{grid-column:2;grid-row:1/span 3;}
-    .track-body>.tempo{grid-column:1;grid-row:2;}
-    .track-body>.log-row{grid-column:1;grid-row:3;}
-    .track-body>.field{grid-column:2;grid-row:4;}
-    .track-body>.vocab{grid-column:1/-1;grid-row:5;padding-top:28px;}
-    .track-body>.tsec{grid-column:1/-1;grid-row:6;}
+    .track-body>.steps{grid-column:2;grid-row:1;}
+    .track-body>.dw{grid-column:1/-1;grid-row:2;}
+    .track-body>.tempo{grid-column:1;grid-row:3;}
+    .track-body>.field{grid-column:2;grid-row:3;}
+    .track-body>.vocab{grid-column:1/-1;grid-row:4;padding-top:28px;}
+    .track-body>.tsec{grid-column:1/-1;grid-row:5;}
+    .track-body>.log-row{grid-column:1/-1;grid-row:6;}
   }
-  @media(min-width:1280px){.container{max-width:1120px;}.nav-inner{max-width:1120px;}}
-  @media(max-width:1023px){.method-grid{grid-template-columns:1fr 1fr;}.hero-inner{gap:40px;}}
+  @media(min-width:1280px){
+    .container{max-width:1120px;}
+    .nav-inner{max-width:1120px;}
+  }
+  @media(max-width:1023px){
+    .method-grid{grid-template-columns:1fr 1fr;}
+    .hero-inner{gap:40px;}
+  }
   @media(max-width:768px){
     body{font-size:16px;}
     .container{padding:0 20px;}
@@ -360,12 +411,10 @@
     .hero-inner{grid-template-columns:1fr;text-align:center;gap:48px;}
     .hero-art{max-width:300px;}
     .art-ring{inset:-14px;}
-    .hero-sub{margin:24px auto 36px;}
     .hero-cta{justify-content:center;}
     .screen{padding:72px 0;}
     .screen.tall{min-height:auto;}
     .sec-title{font-size:26px;}
-    .journey-count{font-size:38px;}
     .stats{grid-template-columns:1fr 1fr;gap:16px;}
     .cards-2{grid-template-columns:1fr;}
     .method-grid{grid-template-columns:1fr;}
@@ -388,10 +437,10 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <div class="logo"><span class="logo-box">啃料</span><span class="logo-num">10</span></div>
+    <div class="logo"><span class="logo-box">Dictation</span><span class="logo-num">工作台</span></div>
     <div class="nav-links">
-      <a href="#journey">征途</a>
       <a href="#method">方法</a>
+      <a href="#features">功能</a>
       <a href="#data">数据</a>
       <a href="#review">复习</a>
     </div>
@@ -409,49 +458,74 @@
       <div class="art-ring"></div>
       <div class="art-blob"></div>
       <div class="art-emoji">🎧</div>
-      <span class="art-chip c1">✍️ 逐字听写</span>
+      <span class="art-chip c1">✍️ 盲听查词</span>
       <span class="art-chip c2">🗣️ 通篇背诵</span>
       <span class="art-chip c3">⚡ 原速输出</span>
-      <span class="art-chip c4">📻 NPR 原声</span>
+      <span class="art-chip c4">📻 英文原声</span>
     </div>
     <div class="hero-copy">
-      <div class="eyebrow">尚雯婕「啃料」学习法 · 素材源自 NPR</div>
-      <h1>啃透一篇，<br>胜过泛听百篇。</h1>
-      <p class="hero-sub">逐字听写 → 通篇背诵 → 背到与原声同速。一月一篇，十篇上线，把英语调成你的工作频道。</p>
+      <h1>吃透一篇，<br>胜过泛听百篇。</h1>
       <div class="hero-cta">
         <button class="btn primary xl" id="startBtn">▶ 开始学习</button>
         <a class="btn ghost xl" href="#method">了解四步法</a>
       </div>
-      <div class="hero-note">无需注册 · 数据保存在本机 · 邮箱登录即可云同步</div>
+      <div class="hero-note">无需注册 · 数据保存在本机 · 登录即可云同步</div>
     </div>
   </div>
 </header>
-
-<section class="screen tall" id="journey">
-  <div class="container narrow center">
-    <span class="sec-tag">本机征途</span>
-    <div class="journey-count"><b id="doneCount">0</b><span class="jc-sep">/</span><span id="goalCount">10</span><span class="jc-unit">篇上线</span></div>
-    <p class="sec-sub journey-sub">每一篇走完四步，征途就向前推进一格。十篇啃完，英语换挡。</p>
-    <div class="season-bar">
-      <div class="season-fill" id="dialFill" style="width:0%"></div>
-      <div class="season-needle" id="dialNeedle" style="left:0%"></div>
-      <div class="season-ticks" id="dialTicks"></div>
-    </div>
-  </div>
-</section>
 
 <section class="screen tall" id="method">
   <div class="container">
     <div class="sec-head center">
       <span class="sec-tag">方法论</span>
-      <h2 class="sec-title">选一档 NPR 节目，用四步把它啃透</h2>
+      <h2 class="sec-title">选一份英文音频，用四步把它吃透</h2>
       <p class="sec-sub">不求多，求透。一段音频从「听不懂」到「脱口而出」，只走这四步。</p>
     </div>
     <div class="method-grid">
-      <div class="mcard"><div class="mcard-n">1</div><h3>选材料</h3><p>挑一段感兴趣、听得下去的 NPR 音频，把它请进你的料库。</p></div>
-      <div class="mcard"><div class="mcard-n">2</div><h3>逐字听写</h3><p>不看文稿边听边写，生词逐个查字典，直到完全听懂。</p></div>
+      <div class="mcard"><div class="mcard-n">1</div><h3>收集素材</h3><p>挑一段感兴趣、听得下去的英文音频，把它收进你的素材库。</p></div>
+      <div class="mcard"><div class="mcard-n">2</div><h3>盲听查词</h3><p>不看文稿，逐字听写，生词逐个查字典，直到完全听懂。</p></div>
       <div class="mcard"><div class="mcard-n">3</div><h3>通篇背诵</h3><p>词句全部弄懂之后，把整篇从头背到尾。</p></div>
       <div class="mcard"><div class="mcard-n">4</div><h3>背到原速</h3><p>练到能以原声语速脱口而出——语感就是这样练出来的。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="screen tall" id="features">
+  <div class="container">
+    <div class="sec-head center">
+      <span class="sec-tag">功能介绍</span>
+      <h2 class="sec-title">我怎么帮你</h2>
+      <p class="sec-sub">从收录素材到吃透一篇，需要的工具都在这里。</p>
+    </div>
+    <div class="feat-grid">
+      <div class="fcard">
+        <div class="fcard-ic">🎧</div>
+        <div>
+          <h3>素材收录 · 快捷播放</h3>
+          <p>把音频和文稿收入素材库，本地音频随时载入，即刻播放。支持 0.5×–1.25× 变速、后退 5 秒、单篇循环及空格键播放/暂停。</p>
+        </div>
+      </div>
+      <div class="fcard">
+        <div class="fcard-ic">🔤</div>
+        <div>
+          <h3>盲听查词</h3>
+          <p>文稿默认锁定，引导你先听、后看。拼不出的生词，可通过大致拼写猜词，直到找到正确答案。</p>
+        </div>
+      </div>
+      <div class="fcard">
+        <div class="fcard-ic">📖</div>
+        <div>
+          <h3>生词成表 · 正文标亮</h3>
+          <p>查过的词一键收入本篇生词本，可标记「已掌握」。解锁文稿后，收藏过的生词和词组会在正文中自动标亮，点击即可重温释义——重点在哪，一眼可见。</p>
+        </div>
+      </div>
+      <div class="fcard">
+        <div class="fcard-ic">⏱</div>
+        <div>
+          <h3>学习时长 · 数据记录</h3>
+          <p>进入学习页自动计时，离开自动归档；背诵另有独立秒表，与原声时长对照练语速。累计学习、连续打卡、近 14 天投入，首页数据区一目了然。</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -466,7 +540,7 @@
     <div class="stats">
       <div class="stat"><div class="k">累计学习</div><div class="v" id="statMinutes">0<small> 分钟</small></div></div>
       <div class="stat flame"><div class="k">连续打卡</div><div class="v" id="statStreak">0<small> 天</small></div></div>
-      <div class="stat done"><div class="k">已上线</div><div class="v" id="statDone">0<small> 篇</small></div></div>
+      <div class="stat done"><div class="k">已完成</div><div class="v" id="statDone">0<small> 篇</small></div></div>
       <div class="stat"><div class="k">今日复习</div><div class="v" id="statReview">0<small> 篇待复习</small></div></div>
     </div>
     <div class="cards-2">
@@ -486,39 +560,39 @@
   <div class="container narrow">
     <div class="sec-head center">
       <span class="sec-tag">02 · 今日复习</span>
-      <h2 class="sec-title">背过的料，按遗忘曲线回炉</h2>
+      <h2 class="sec-title">背过的素材，按遗忘曲线回炉</h2>
       <p class="sec-sub">完成第 3 步后，系统会在第 1 / 2 / 4 / 7 / 15 天提醒你回来复习。</p>
     </div>
     <div class="review-list" id="reviewList"></div>
-    <div class="center-cta"><button class="btn ghost" data-gostudy>进入「我的料」→</button></div>
+    <div class="center-cta"><button class="btn ghost" data-gostudy>进入「素材库」→</button></div>
   </div>
 </section>
 
 <footer class="footer">
   <div class="marquee" aria-hidden="true">
     <div class="marquee-track">
-      <span class="mq-item">Up First</span><span class="mq-dot">●</span>
-      <span class="mq-item">Morning Edition</span><span class="mq-dot">●</span>
-      <span class="mq-item">StoryCorps</span><span class="mq-dot">●</span>
-      <span class="mq-item">Planet Money</span><span class="mq-dot">●</span>
-      <span class="mq-item">Fresh Air</span><span class="mq-dot">●</span>
-      <span class="mq-item">All Things Considered</span><span class="mq-dot">●</span>
-      <span class="mq-item">TED Radio Hour</span><span class="mq-dot">●</span>
-      <span class="mq-item">How I Built This</span><span class="mq-dot">●</span>
-      <span class="mq-item">Up First</span><span class="mq-dot">●</span>
-      <span class="mq-item">Morning Edition</span><span class="mq-dot">●</span>
-      <span class="mq-item">StoryCorps</span><span class="mq-dot">●</span>
-      <span class="mq-item">Planet Money</span><span class="mq-dot">●</span>
-      <span class="mq-item">Fresh Air</span><span class="mq-dot">●</span>
-      <span class="mq-item">All Things Considered</span><span class="mq-dot">●</span>
-      <span class="mq-item">TED Radio Hour</span><span class="mq-dot">●</span>
-      <span class="mq-item">How I Built This</span><span class="mq-dot">●</span>
+      <span class="mq-item">Dictation</span><span class="mq-dot">●</span>
+      <span class="mq-item">Listening</span><span class="mq-dot">●</span>
+      <span class="mq-item">Vocabulary</span><span class="mq-dot">●</span>
+      <span class="mq-item">Recitation</span><span class="mq-dot">●</span>
+      <span class="mq-item">Shadowing</span><span class="mq-dot">●</span>
+      <span class="mq-item">Transcript</span><span class="mq-dot">●</span>
+      <span class="mq-item">Review</span><span class="mq-dot">●</span>
+      <span class="mq-item">Repeat</span><span class="mq-dot">●</span>
+      <span class="mq-item">Dictation</span><span class="mq-dot">●</span>
+      <span class="mq-item">Listening</span><span class="mq-dot">●</span>
+      <span class="mq-item">Vocabulary</span><span class="mq-dot">●</span>
+      <span class="mq-item">Recitation</span><span class="mq-dot">●</span>
+      <span class="mq-item">Shadowing</span><span class="mq-dot">●</span>
+      <span class="mq-item">Transcript</span><span class="mq-dot">●</span>
+      <span class="mq-item">Review</span><span class="mq-dot">●</span>
+      <span class="mq-item">Repeat</span><span class="mq-dot">●</span>
     </div>
   </div>
   <div class="container">
     <div class="footnote">
-      <b>四步法</b>：① 选材料 · ② 逐字听写查词 · ③ 通篇背诵 · ④ 背到与原声同速。<br>
-      进度、笔记、计时保存在当前电脑的浏览器里。配置云同步并用邮箱登录后，所有数据（含音频）自动同步到云端，换电脑登录同一邮箱即可无缝继续。
+      <b>四步法</b>：① 收集素材 · ② 盲听查词 · ③ 通篇背诵 · ④ 背到与原声同速。<br>
+      进度、笔记、计时保存在当前电脑的浏览器里。换电脑用：先「导出进度」得到备份文件，拷到另一台电脑「导入进度」即可；音频文件（OGG/WAV）请随身携带、各电脑重新载入。
     </div>
   </div>
 </footer>
@@ -529,128 +603,44 @@
 <div class="topstrip"></div>
 <div class="study-head">
   <button class="back-btn" id="backBtn">← 返回首页</button>
-  <div class="study-title"><span class="logo-box sm">啃料</span><span>我的料</span><span class="mat-count" id="matHint"></span></div>
+  <div class="study-title"><span class="logo-box sm">Dictation</span><span>素材库</span><span class="mat-count" id="matHint"></span></div>
   <div class="study-live" id="studyLive">⏱ 学习中 00:00</div>
 </div>
 <div class="container study-wrap">
   <div class="study-pagehead">
-    <div class="eyebrow">STUDIO · 我的料台</div>
-    <h1 class="study-h1">今天，也啃透一点。</h1>
-    <p class="study-sub">每档材料走四步：载入音频 → 逐字听写 → 通篇背诵 → 背到原速。展开任意一档即可开始。</p>
+    <div class="eyebrow">STUDIO · 素材工作台</div>
+    <h1 class="study-h1">今天，也吃透一点。</h1>
+    <p class="study-sub">每份素材走四步：载入音频 → 盲听查词 → 通篇背诵 → 背到原速。展开任意一份即可开始。</p>
   </div>
   <div class="toolbar">
-    <button class="btn primary" id="addBtn">+ 添加一档 NPR 材料</button>
-    <a class="btn ghost" id="findBtn" href="https://www.npr.org/" target="_blank" rel="noopener">去 NPR 找料 ↗</a>
+    <button class="btn primary" id="addBtn">+ 添加一份素材</button>
     <button class="btn ghost" id="exportBtn">⬇ 导出进度</button>
     <button class="btn ghost" id="importBtn">⬆ 导入进度</button>
     <input type="file" id="importFile" accept="application/json,.json" style="display:none">
-  </div>
-  <div class="npr-hint">
-    点上面若打不开，手动复制到浏览器：
-    <span class="mono" id="nprUrlText">https://www.npr.org</span><button class="copybtn" id="copyNpr">复制</button><br>
-    基础起步推荐（短音频）：<span class="mono" style="user-select:all">npr.org/podcasts/510318/up-first</span> ·
-    <span class="mono" style="user-select:all">npr.org/sections/storycorps</span>
   </div>
   <div id="materials"></div>
 </div>
 </div>
 
-<!-- ===== 添加材料弹窗 ===== -->
+<!-- ===== ADD MODAL ===== -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
-    <h2>添加一档 NPR 材料</h2>
-    <div class="sub">先去 NPR 挑一段你感兴趣、听得下去的音频，把文稿和链接贴进来。</div>
+    <h2>添加一份素材</h2>
+    <div class="sub">先挑一段你感兴趣、听得下去的英文音频，把文稿和链接贴进来。</div>
     <div class="tip" id="levelTip"></div>
     <div class="tip gray">🎧 音频请用 <b>OGG / WAV / Opus</b> 格式（内嵌浏览器不支持 MP3）。下载的是 mp3 也没关系——发给我，我帮你转成 ogg。</div>
     <div class="field"><label>标题（节目名 / 主题）</label><input id="fTitle" placeholder="例：Morning news brief — a short one"></div>
     <div class="two">
-      <div class="field"><label>NPR 原文链接（可选）</label><input id="fNpr" placeholder="https://www.npr.org/..."></div>
+      <div class="field"><label>原文链接（可选）</label><input id="fNpr" placeholder="https://..."></div>
       <div class="field"><label>音频页链接（可选，方便回去下载）</label><input id="fAudio" placeholder="音频页面地址"></div>
     </div>
     <div class="field"><label>音频时长（用于第 4 步"背到原速"的目标）</label>
       <input id="fDur" placeholder="例：4:30 （分:秒）；载入本地音频后会自动填写"></div>
     <div class="field"><label>文稿 / Transcript（听写核对与背诵用）</label>
-      <textarea id="fText" rows="5" placeholder="把 NPR 页面上的文字稿粘贴进来。听写时先不看，写完再来对照。"></textarea></div>
+      <textarea id="fText" rows="5" placeholder="把原文网页上的文字稿粘贴进来。听写时先不看，写完再来对照。"></textarea></div>
     <div class="modal-actions">
       <button class="btn ghost" id="cancelBtn">取消</button>
-      <button class="btn primary" id="saveBtn">加入我的料</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== 邮箱登录 / 注册弹窗 ===== -->
-<div class="modal-bg" id="authModalBg">
-  <div class="modal">
-    <h2 id="authTitle">登录以云同步</h2>
-    <div class="sub">用邮箱账号登录后，学习进度、笔记、生词本、音频都会自动同步到云端，换电脑无缝继续。</div>
-    <div class="atabs">
-      <button class="atab on" id="tabLogin">登录</button>
-      <button class="atab" id="tabSignup">注册新账号</button>
-    </div>
-    <div class="field"><label>邮箱</label><input id="aEmail" type="email" placeholder="you@example.com" autocomplete="email"></div>
-    <div class="field"><label>密码（至少 6 位）</label><input id="aPass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
-    <div style="text-align:right;margin-top:10px;"><button class="flink" id="aForgot">忘记密码？发重置邮件</button></div>
-    <div class="aerr" id="aErr"></div>
-    <div class="aok" id="aOk"></div>
-    <div class="abtn-row">
-      <button class="btn primary" id="aSubmit">登录</button>
-      <button class="btn ghost" id="aCancel">取消</button>
-    </div>
-    <button class="reconfig" id="aReconfig">⚙ 换 Firebase 项目 / 重新配置云同步</button>
-  </div>
-</div>
-
-<!-- ===== 云同步配置向导弹窗 ===== -->
-<div class="modal-bg" id="setupModalBg">
-  <div class="modal" style="max-width:640px">
-    <h2>配置云同步（一次性 · 约 5 分钟）</h2>
-    <div class="sub">云同步由免费的 Firebase 提供。只需在下面粘贴一次配置，以后打开本页就会自动连接。</div>
-    <details class="guide" open>
-      <summary>📋 点我展开：一步步获取配置</summary>
-      <div class="guide-body">
-        <ol>
-          <li>打开 <b>console.firebase.google.com</b>（需 Google 账号，仅配置时用一次；国内直连需自备网络环境），点「添加项目」，名字随意（如 kenliao），创建时<b>可关闭 Google Analytics</b>。</li>
-          <li>进入项目，点首页中间的 <b>Web 图标 &lt;/&gt;</b> 注册应用（昵称随意、不勾 Hosting），页面会给出一段 <b>firebaseConfig</b> 代码——整段复制备用。</li>
-          <li>左侧 <b>构建 → Authentication → 开始使用 → 登录方式</b>，启用 <b>「电子邮件/密码」</b>。</li>
-          <li>左侧 <b>构建 → Firestore Database → 创建数据库</b>，位置建议选 <b>asia-southeast1 (Singapore)</b>，以生产模式创建；切到「规则」标签，粘贴下面的规则并点「发布」：
-            <div class="codebox">rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{uid} {
-      allow read, write: if request.auth != null
-        &amp;&amp; request.auth.uid == uid;
-    }
-  }
-}</div></li>
-          <li>（可选：音频也上云）<b>构建 → Storage → 开始使用</b>，把规则换成：
-            <div class="codebox">rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /audio/{uid}/{file} {
-      allow read, write: if request.auth != null
-        &amp;&amp; request.auth.uid == uid;
-    }
-  }
-}</div></li>
-          <li>回到本页，把第 2 步复制的 <b>firebaseConfig 整段</b>粘贴到下面的框里 → 保存。</li>
-        </ol>
-      </div>
-    </details>
-    <div class="field"><label>粘贴 firebaseConfig（整段复制进来即可，自动识别）</label>
-      <textarea id="cfgText" rows="7" placeholder='const firebaseConfig = {
-  apiKey: "AIza…",
-  authDomain: "xxx.firebaseapp.com",
-  projectId: "xxx",
-  storageBucket: "xxx.appspot.com",
-  messagingSenderId: "…",
-  appId: "1:…:web:…"
-};'></textarea></div>
-    <div class="aerr" id="cfgErr"></div>
-    <div class="aok" id="cfgOk"></div>
-    <div class="modal-actions">
-      <button class="btn ghost" id="cfgClear">清除已存配置</button>
-      <button class="btn ghost" id="cfgCancel">取消</button>
-      <button class="btn primary" id="cfgSave">保存并连接</button>
+      <button class="btn primary" id="saveBtn">加入素材库</button>
     </div>
   </div>
 </div>
@@ -660,15 +650,16 @@ service firebase.storage {
 /* ---------------- storage ---------------- */
 const KEY = "kenliao_state_v1";
 const STEP_DEFS = [
-  {k:"select", num:"步骤 1", t:"选材料", d:"找到感兴趣、难度合适的 NPR 音频，下载/收藏它。加入这里即视为完成。"},
-  {k:"dictation", num:"步骤 2", t:"精听 + 逐字听写", d:"不看文稿，一个字一个字把它听写出来，生词逐个查字典，直到完全听懂。"},
+  {k:"select", num:"步骤 1", t:"收集素材", d:"找到感兴趣、难度合适的英文音频，下载/收藏它。加入这里即视为完成。"},
+  {k:"dictation", num:"步骤 2", t:"盲听查词", d:"不看文稿，一个字一个字把它听写出来，生词逐个查字典，直到完全听懂。"},
   {k:"recite", num:"步骤 3", t:"通篇背诵", d:"在单词、语法全部理解之后，把整篇从头背到尾。"},
   {k:"speed", num:"步骤 4", t:"背到与原声同速", d:"反复练到能以音频本身的语速脱口而出——语感就是这样练出来的。"}
 ];
 const REVIEW_INTERVALS=[1,2,4,7,15]; // days
 const LEVEL_TIPS={
-  beginner:"你的基础偏弱：从 NPR 里挑<b>短</b>的（3–5 分钟）、语速慢一点的段落起步，比如 “Up First” 的单条新闻、StoryCorps 短故事。别一上来就啃长访谈。",
+  beginner:"你的基础偏弱：先挑<b>短</b>的（3–5 分钟）、语速慢一点的音频起步，比如短新闻、小故事类节目。别一上来就挑战长访谈。",
 };
+
 function load(){
   try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.materials)return s;}catch(e){}
   return {materials:[], settings:{goal:10, level:"beginner"}, ver:1};
@@ -681,28 +672,29 @@ let state = load();
 const $=s=>document.querySelector(s);
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-function today(){return new Date().toISOString().slice(0,10);}
+function today(){const d=new Date();return d.toISOString().slice(0,10);}
 function dateStr(d){return d.toISOString().slice(0,10);}
 function daysBetween(a,b){return Math.round((new Date(b)-new Date(a))/86400000);}
-function parseDur(s){
+function parseDur(s){ // "4:30" or "270" -> seconds
   if(!s)return 0;s=String(s).trim();
   if(s.includes(":")){const p=s.split(":").map(Number);return (p[0]||0)*60+(p[1]||0);}
   const n=Number(s);return isNaN(n)?0:n;
 }
 function fmtDur(sec){if(!sec)return "—";const m=Math.floor(sec/60),s=sec%60;return m+":"+String(s).padStart(2,"0");}
-function fmt(sec){const m=Math.floor(sec/60),s=sec%60;return m+":"+String(s).padStart(2,"0");}
 function stepsDone(m){return STEP_DEFS.filter(s=>m.steps[s.k]).length;}
 function totalMinutes(){let t=0;state.materials.forEach(m=>m.log.forEach(l=>t+=l.minutes));(state.studyLog||[]).forEach(l=>t+=l.minutes);return t;}
 function allLogDates(){const s=new Set();state.materials.forEach(m=>m.log.forEach(l=>s.add(l.date)));(state.studyLog||[]).forEach(l=>s.add(l.date));return s;}
 function streak(){
   const set=allLogDates();if(set.size===0)return 0;
   let n=0;let d=new Date();
+  // allow today OR start from yesterday if today not logged
   if(!set.has(dateStr(d))){d.setDate(d.getDate()-1);}
   while(set.has(dateStr(d))){n++;d.setDate(d.getDate()-1);}
   return n;
 }
 function isDone(m){return stepsDone(m)===4;}
 function reviewInfo(m){
+  // eligible once recite (step3) done
   if(!m.steps.recite)return null;
   const anchor = m.lastReviewAt || m.reciteDate || m.createdAt;
   const idx = Math.min(m.reviewCount||0, REVIEW_INTERVALS.length-1);
@@ -713,30 +705,30 @@ function reviewInfo(m){
 
 /* ---------------- render ---------------- */
 let journeyChart, minutesChart;
+
 function render(){
-  renderHeader();renderStats();renderReview();renderMaterials();renderCharts();
+  renderHeader();
+  renderStats();
+  renderReview();
+  renderMaterials();
+  renderCharts();
   save();
 }
+
 function renderHeader(){
-  const goal=state.settings.goal;
-  const done=state.materials.filter(isDone).length;
   const inprog=state.materials.filter(m=>!isDone(m)&&stepsDone(m)>0).length;
-  $("#goalCount").textContent=goal;
-  $("#doneCount").textContent=done;
   $("#onairCount").textContent=inprog;
-  const pct=Math.min(100, done/goal*100);
-  $("#dialFill").style.width=pct+"%";
-  $("#dialNeedle").style.left=pct+"%";
-  const tk=$("#dialTicks");if(!tk.childElementCount){for(let i=0;i<goal;i++)tk.appendChild(el("span"));}
 }
+
 function renderStats(){
   $("#statMinutes").innerHTML=totalMinutes()+'<small> 分钟</small>';
   $("#statStreak").innerHTML=streak()+'<small> 天</small>';
   $("#statDone").innerHTML=state.materials.filter(isDone).length+'<small> 篇</small>';
   const due=state.materials.filter(m=>{const r=reviewInfo(m);return r&&r.due;}).length;
   $("#statReview").innerHTML=due+'<small> 篇待复习</small>';
-  $("#matHint").textContent=state.materials.length? state.materials.length+" 档在库" : "";
+  $("#matHint").textContent=state.materials.length? state.materials.length+" 份在库" : "";
 }
+
 function renderReview(){
   const list=$("#reviewList");list.innerHTML="";
   const items=state.materials.map(m=>({m,r:reviewInfo(m)})).filter(x=>x.r)
@@ -745,7 +737,7 @@ function renderReview(){
   const soon=items.filter(x=>!x.r.due).slice(0,2);
   const show=[...due,...soon];
   if(show.length===0){
-    list.appendChild(el("div","empty","还没有可复习的料。背完第 3 步（通篇背诵）后，这里会按遗忘曲线提醒你回炉。"));
+    list.appendChild(el("div","empty","还没有可复习的素材。背完第 3 步（通篇背诵）后，这里会按遗忘曲线提醒你回炉。"));
     return;
   }
   show.forEach(({m,r})=>{
@@ -754,7 +746,8 @@ function renderReview(){
     info.appendChild(el("div","t",escapeHtml(m.title)));
     info.appendChild(el("div","s", r.due? ("第 "+r.stage+" 轮复习 · 已到期") : ("第 "+r.stage+" 轮 · "+r.inDays+" 天后")));
     item.appendChild(info);
-    item.appendChild(el("span","badge "+(r.due?"due":"soon"), r.due?"待复习":(r.inDays+"d")));
+    const badge=el("span","badge "+(r.due?"due":"soon"), r.due?"待复习":(r.inDays+"d"));
+    item.appendChild(badge);
     if(r.due){
       const b=el("button","btn-mini","✓ 复习完成");
       b.onclick=()=>{m.lastReviewAt=today();m.reviewCount=(m.reviewCount||0)+1;render();};
@@ -763,14 +756,16 @@ function renderReview(){
     list.appendChild(item);
   });
 }
+
 function renderMaterials(){
+  if(typeof dwStopLoop==="function")dwStopLoop();
   const c=$("#materials");c.innerHTML="";
   if(state.materials.length===0){
     const e=el("div","empty empty-lg");
     e.appendChild(el("div","empty-emoji","📻"));
-    e.appendChild(el("div","empty-t","你的料台还空着"));
-    e.appendChild(el("div","empty-d","挑一段 3–5 分钟的 NPR 短音频，从这里开始你的第一篇。"));
-    const b=el("button","btn primary","+ 添加第一档材料");
+    e.appendChild(el("div","empty-t","你的素材库还空着"));
+    e.appendChild(el("div","empty-d","挑一段 3–5 分钟的英文短音频，从这里开始你的第一篇。"));
+    const b=el("button","btn primary","+ 添加第一份素材");
     b.style.marginTop="20px";
     b.onclick=openModal;
     e.appendChild(b);
@@ -779,6 +774,7 @@ function renderMaterials(){
   }
   state.materials.forEach((m,i)=>c.appendChild(trackEl(m,i)));
 }
+
 function ladderEl(m){
   const done=stepsDone(m);
   const lad=el("div","ladder");
@@ -790,8 +786,10 @@ function updateLadder(wrap,m){
   const old=wrap.querySelector(".track-head .ladder");
   if(old)old.replaceWith(ladderEl(m));
 }
+
 function trackEl(m,i){
   const wrap=el("div","track"+(m._open?" open":""));
+  // head
   const head=el("div","track-head");
   head.appendChild(el("div","track-num",String(i+1).padStart(2,"0")));
   const main=el("div","track-main");
@@ -799,7 +797,7 @@ function trackEl(m,i){
   const meta=el("div","track-meta");
   meta.innerHTML = (m.durSec?('<span>⏱ '+fmtDur(m.durSec)+'</span>'):'') +
     (m.audioName?('<span>🎧 音频已载入</span>'):'') +
-    (m.nprUrl?('<span><a href="'+escapeAttr(m.nprUrl)+'" target="_blank" rel="noopener">NPR 原文 ↗</a></span>'):'') +
+    (m.nprUrl?('<span><a href="'+escapeAttr(m.nprUrl)+'" target="_blank" rel="noopener">原文 ↗</a></span>'):'') +
     (m.audioUrl?('<span><a href="'+escapeAttr(m.audioUrl)+'" target="_blank" rel="noopener">音频页 ↗</a></span>'):'') +
     (m.vocab&&m.vocab.length?('<span>📖 '+m.vocab.length+' 生词</span>'):'') +
     '<span>已投入 '+m.log.reduce((s,l)=>s+l.minutes,0)+' 分钟</span>';
@@ -809,13 +807,22 @@ function trackEl(m,i){
   head.appendChild(el("div","track-caret","▶"));
   head.onclick=(e)=>{if(e.target.tagName==="A")return;m._open=!m._open;render();};
   wrap.appendChild(head);
+
+  // body (built only when open, so audio players aren't spun up for closed tracks)
   const body=el("div","track-body");
   if(m._open) buildBody(m,wrap,body);
   wrap.appendChild(body);
   return wrap;
 }
+
 function buildBody(m,wrap,body){
+  // ---- 播放器（听写全靠它，放最上面）----
   body.appendChild(buildPlayer(m,wrap));
+
+  // ---- 听写工作台：第 2 步真正干活的地方 ----
+  body.appendChild(buildDW(m,wrap));
+
+  // ---- 四步 ----
   const steps=el("div","steps");
   STEP_DEFS.forEach(s=>{
     const st=el("div","step"+(m.steps[s.k]?" done":""));
@@ -827,7 +834,7 @@ function buildBody(m,wrap,body){
       st.classList.toggle("done",m.steps[s.k]);
       chk.textContent=m.steps[s.k]?"✓":"";
       updateLadder(wrap,m);
-      renderHeader();renderStats();renderReview();renderCharts();
+      renderHeader();renderStats();renderReview();renderCharts();  // 轻量刷新，不打断音频
     };
     st.appendChild(chk);
     const sb=el("div","step-body");
@@ -837,51 +844,94 @@ function buildBody(m,wrap,body){
     steps.appendChild(st);
   });
   body.appendChild(steps);
+
+  // ---- 背诵计时 / 原速对照 ----
   body.appendChild(tempoEl(m));
-  const log=el("div","log-row");
-  const del=el("button","del","删除这档");
-  del.onclick=()=>{if(confirm("确定删除「"+m.title+"」？此操作无法撤销。")){
-    const u=audioURLCache[m.id];if(u&&u.indexOf("blob:")===0)URL.revokeObjectURL(u);delete audioURLCache[m.id];
-    idbDel(m.id);
-    if(m.audioCloud&&fb.ok&&fb.user&&fb.storage){try{fb.storage.ref("audio/"+fb.user.uid+"/"+m.id).delete().catch(()=>{});}catch(e){}}
-    state.materials=state.materials.filter(x=>x!==m);save();render();}};
-  log.appendChild(del);
-  body.appendChild(log);
+
+  // ---- 笔记 ----
   const notes=el("div","field");
   notes.innerHTML='<label>生词 / 笔记（自动保存）</label>';
   const ta=el("textarea");ta.value=m.notes||"";ta.placeholder="听写时遇到的生词、难句记在这里…";
   ta.oninput=()=>{m.notes=ta.value;save();};
   notes.appendChild(ta);
   body.appendChild(notes);
+
+  // ---- 查词 & 生词本 ----
   body.appendChild(buildVocab(m));
-  if(m.transcript){
-    const sec=el("div","tsec");
-    sec.appendChild(el("div","vocab-title","文稿 Transcript"));
-    const inner=el("div");inner.id="ts_"+m.id;
-    renderTranscriptSection(m,inner);
-    sec.appendChild(inner);
-    body.appendChild(sec);
-  }
+
+  // ---- 文稿（默认上锁：先听写，后对照）----
+  const sec=el("div","tsec");sec.id="tsw_"+m.id;
+  sec.appendChild(el("div","vocab-title","文稿 Transcript"));
+  const inner=el("div");inner.id="ts_"+m.id;
+  if(m.transcript)renderTranscriptSection(m,inner);
+  sec.appendChild(inner);
+  if(!m.transcript)sec.style.display="none";
+  body.appendChild(sec);
+
+  // ---- 删除（学习时间已由进入学习页自动计时）----
+  const log=el("div","log-row");
+  const del=el("button","del","删除这份素材");
+  del.onclick=()=>{if(confirm("确定删除「"+m.title+"」？此操作无法撤销。")){
+    const u=audioURLCache[m.id];if(u&&u.indexOf("blob:")===0)URL.revokeObjectURL(u);delete audioURLCache[m.id];
+    dwStopLoop();delete playerAudio[m.id];delete dwMetaCache[m.id];
+    idbDel(m.id);
+    if(m.audioCloud&&fb.ok&&fb.user&&fb.storage){try{fb.storage.ref("audio/"+fb.user.uid+"/"+m.id).delete().catch(()=>{});}catch(e){}}
+    state.materials=state.materials.filter(x=>x!==m);save();render();}};
+  log.appendChild(del);
+  body.appendChild(log);
 }
 
-/* ---------------- 背诵计时 + 语速对比 ---------------- */
-const timers={};
+/* recitation timer + tempo meter */
+const timers={}; // id -> {start, raf, elapsed}
+const studyTimers={}; // id -> {start, raf, elapsed}  学习计时（手动开始/结束）
+function toggleStudy(m,wrap,btn){
+  const t=studyTimers[m.id];
+  if(t){ // 结束并记录
+    cancelAnimationFrame(t.raf);
+    const secs=Math.round(t.elapsed);
+    delete studyTimers[m.id];
+    if(secs>=1){
+      const mins=Math.max(1,Math.round(secs/60));
+      m.log.push({date:today(),minutes:mins});
+      save();renderHeader();renderStats();renderCharts();
+      const meta=wrap.querySelector(".track-meta");
+      if(meta&&meta.lastElementChild)meta.lastElementChild.textContent='已投入 '+m.log.reduce((s,l)=>s+l.minutes,0)+' 分钟';
+    }
+    const d=document.getElementById("st_"+m.id);if(d)d.textContent="00:00";
+    if(btn)btn.textContent="▶ 开始学习";
+  }else{ // 开始
+    studyTimers[m.id]={start:performance.now(),elapsed:0};
+    if(btn)btn.textContent="■ 结束并记录";
+    const tick=()=>{const t2=studyTimers[m.id];if(!t2)return;
+      t2.elapsed=(performance.now()-t2.start)/1000;
+      const d=document.getElementById("st_"+m.id);if(d)d.textContent=fmt(Math.floor(t2.elapsed));
+      t2.raf=requestAnimationFrame(tick);};
+    tick();
+  }
+}
 function tempoEl(m){
-  const box=el("div","tempo");
+  const box=el("div","tempo");box.id="tp_"+m.id;
   const top=el("div","tempo-top");
   const disp=el("div","timer-display");disp.id="t_"+m.id;
   const running=timers[m.id];
-  disp.textContent=running? fmt(Math.floor(running.elapsed)) : "0:00";
+  disp.textContent=running? fmt(running.elapsed) : "0:00";
   top.appendChild(disp);
   const startBtn=el("button","btn-mini", running?"■ 停止并记录":"● 开始背诵计时");
+  startBtn.style.fontSize="13px";startBtn.style.padding="9px 15px";
   startBtn.onclick=()=>toggleTimer(m,startBtn);
   top.appendChild(startBtn);
-  if(m.durSec){top.appendChild(el("span","chip","原声 "+fmtDur(m.durSec)));}
+  if(m.durSec){
+    top.appendChild(el("span","chip","原声 "+fmtDur(m.durSec)));
+  }
   box.appendChild(top);
+
+  // meter: latest recite time vs target
   const best=m.reciteTimes&&m.reciteTimes.length?Math.min(...m.reciteTimes.map(r=>r.seconds)):0;
   const latest=m.reciteTimes&&m.reciteTimes.length?m.reciteTimes[m.reciteTimes.length-1].seconds:0;
   if(m.durSec){
     const meter=el("div","tempo-meter");
+    // fill = how close latest is to target speed. reciting slower than audio => longer time.
+    // ratio = target/yourtime (>=1 means at or faster than original pace)
     let pct=0;
     if(latest>0){pct=Math.min(100, Math.round(m.durSec/latest*100));}
     const fill=el("div","fill");fill.style.width=pct+"%";
@@ -901,18 +951,22 @@ function tempoEl(m){
     }
     box.appendChild(el("div","tempo-note",note));
   } else {
-    box.appendChild(el("div","tempo-note","想用「背到原速」计时器？在材料信息里补上音频时长即可对照。"));
+    box.appendChild(el("div","tempo-note","想用「背到原速」计时器？在素材信息里补上音频时长即可对照。"));
   }
   return box;
 }
+function fmt(sec){const m=Math.floor(sec/60),s=sec%60;return m+":"+String(s).padStart(2,"0");}
 function toggleTimer(m,btn){
   const t=timers[m.id];
-  if(t){
+  if(t){ // stop
     cancelAnimationFrame(t.raf);
     const secs=Math.round(t.elapsed);
     if(secs>0){m.reciteTimes=m.reciteTimes||[];m.reciteTimes.push({date:today(),seconds:secs});}
     delete timers[m.id];
-    render();
+    save();
+    const old=document.getElementById("tp_"+m.id);   // 只替换计时器这一块，避免重建 DOM 打断正在播放的音频
+    if(old)old.replaceWith(tempoEl(m));
+    renderHeader();renderStats();renderCharts();
   } else {
     timers[m.id]={start:performance.now(),elapsed:0};
     const disp=document.getElementById("t_"+m.id);
@@ -925,7 +979,400 @@ function toggleTimer(m,btn){
   }
 }
 
-/* ---------------- 音频：IndexedDB 存储 + 播放器 ---------------- */
+
+/* ================= 听写工作台（第 2 步「逐字听写」的真实界面） ================= */
+const playerAudio={};        // materialId -> <audio> 元素
+const dwMetaCache={};        // materialId -> {sig, meta}
+let dwLoop=null;             // {audio,a,b,loop,fn}
+
+const ABBR_END=/\b(mr|mrs|ms|dr|prof|st|sr|jr|vs|etc|inc|ltd|co|u\.s|u\.k|a\.m|p\.m|e\.g|i\.e)\.$/i;
+function isSpeakerLabel(s){
+  const t=(s||"").trim();
+  if(!/[:：]$/.test(t))return false;
+  const letters=t.replace(/[^A-Za-z]/g,"");
+  if(!letters)return false;
+  return (t.replace(/[^A-Z]/g,"").length/letters.length)>0.8 && t.split(/\s+/).length<=6;
+}
+/* 把文稿切成句子：句末标点 + 换行为界，跳过说话人标签，过短碎片并入前句 */
+function splitSentences(text){
+  const t=(text||"").replace(/\r/g,"").trim();
+  if(!t)return [];
+  const raw=[];let start=0;
+  for(let i=0;i<t.length;i++){
+    const c=t[i];
+    if(c==="\n"){const s=t.slice(start,i).trim();if(s)raw.push(s);start=i+1;continue;}
+    if(c==="."||c==="!"||c==="?"||c==="…"){
+      let j=i+1;
+      while(j<t.length&&/[.!?…"'”’)\]]/.test(t[j]))j++;
+      if(j>=t.length||/\s/.test(t[j])){
+        const chunk=t.slice(start,j).trim();
+        if(chunk&&!ABBR_END.test(chunk)){raw.push(chunk);start=j;}
+      }
+      i=j-1;
+    }
+  }
+  const last=t.slice(start).trim();if(last)raw.push(last);
+  const out=[];
+  raw.forEach(s=>{
+    if(isSpeakerLabel(s))return;
+    const wc=s.split(/\s+/).filter(Boolean).length;
+    if(out.length&&wc<3){out[out.length-1]+=" "+s;}else if(wc>0)out.push(s);
+  });
+  return out;
+}
+function dictOf(m){
+  if(!m.dict||typeof m.dict!=="object")m.dict={};
+  const d=m.dict;
+  d.marks=d.marks||{};d.ans=d.ans||{};d.drafts=d.drafts||{};
+  if(typeof d.idx!=="number")d.idx=0;
+  return d;
+}
+function dwMeta(m){
+  const tx=m.transcript||"";
+  const sig=tx.length+"|"+tx.slice(0,48);
+  const c=dwMetaCache[m.id];
+  if(c&&c.sig===sig)return c.meta;
+  const sents=splitSentences(tx);
+  const cum=[];let acc=0;
+  sents.forEach(s=>{cum.push(acc);acc+=s.length;});
+  const meta={sents,cum,total:acc||1};
+  dwMetaCache[m.id]={sig,meta};
+  return meta;
+}
+/* 时间估算：按字符数把音频时长等分，用户校准过的句子作为锚点，锚点之间线性插值 */
+function dwFrac(meta,i){return meta.cum[i]/meta.total;}
+function dwAnchors(m,meta){
+  const d=dictOf(m);
+  const pts=[{f:0,t:0}];
+  Object.keys(d.marks).map(Number).filter(k=>k>0&&k<meta.sents.length).sort((a,b)=>a-b)
+    .forEach(k=>{const t=Number(d.marks[k]);if(isFinite(t)&&t>=0)pts.push({f:dwFrac(meta,k),t:t});});
+  if(d.marks[0]!=null&&isFinite(Number(d.marks[0])))pts[0]={f:0,t:Number(d.marks[0])};
+  pts.push({f:1,t:m.durSec||0});
+  const clean=[pts[0]];
+  for(let i=1;i<pts.length;i++){
+    const p=pts[i],last=clean[clean.length-1];
+    if(p.f>last.f+1e-6&&p.t>=last.t)clean.push(p);
+  }
+  if(clean.length<2)clean.push({f:1,t:m.durSec||0});
+  return clean;
+}
+function dwTimeAt(m,meta,frac){
+  const pts=dwAnchors(m,meta);
+  for(let i=0;i<pts.length-1;i++){
+    const a=pts[i],b=pts[i+1];
+    if(frac<=b.f||i===pts.length-2){
+      const r=(b.f-a.f)?((frac-a.f)/(b.f-a.f)):0;
+      return a.t+(b.t-a.t)*Math.max(0,Math.min(1,r));
+    }
+  }
+  return 0;
+}
+function dwStart(m,meta,i){
+  const d=dictOf(m);
+  if(d.marks[i]!=null&&isFinite(Number(d.marks[i])))return Number(d.marks[i]);
+  return dwTimeAt(m,meta,dwFrac(meta,i));
+}
+function dwRange(m,meta,i){
+  let a=dwStart(m,meta,i);
+  let b=(i+1<meta.sents.length)?dwStart(m,meta,i+1):(m.durSec||a+8);
+  if(b<=a+0.5)b=a+Math.max(1.6,meta.sents[i].length/14);
+  return [Math.max(0,a-0.3),Math.min((m.durSec||b+1)+0.5,b+0.35)];
+}
+function dwStopLoop(){
+  if(dwLoop){try{dwLoop.audio.removeEventListener("timeupdate",dwLoop.fn);}catch(e){}dwLoop=null;}
+}
+function dwMsg(m,txt){const e=document.getElementById("dwmsg_"+m.id);if(e)e.innerHTML=txt;}
+function dwPlay(m,i,loop){
+  const audio=playerAudio[m.id];
+  if(!audio||!audio.src){dwMsg(m,"⚠ 先在上面载入音频，才能逐句循环播放。");return;}
+  const meta=dwMeta(m);
+  if(!meta.sents.length)return;
+  if(!m.durSec){dwMsg(m,"⚠ 还读不到音频总时长，等播放器显示「就绪」后再点，或在素材信息里补上时长。");return;}
+  const r=dwRange(m,meta,i);
+  dwStopLoop();
+  const fn=()=>{
+    if(!dwLoop)return;
+    if(audio.currentTime>=dwLoop.b-0.03){
+      if(dwLoop.loop){try{audio.currentTime=dwLoop.a;}catch(e){}}
+      else{audio.pause();dwStopLoop();}
+    }
+  };
+  dwLoop={audio:audio,a:r[0],b:r[1],loop:!!loop,fn:fn};
+  audio.addEventListener("timeupdate",fn);
+  currentAudio=audio;
+  try{audio.currentTime=r[0];}catch(e){}
+  const p=audio.play();
+  if(p&&p.catch)p.catch(()=>dwMsg(m,"⚠ 浏览器拦住了播放，先点一下播放器上的 ▶ 再回来点这里。"));
+  dwMsg(m,(loop?"🔁 循环播放本句":"▶ 播放本句")+" · "+fmt(Math.floor(r[0]))+" → "+fmt(Math.floor(r[1]))+
+    (dictOf(m).marks[i]!=null?" · 已校准":" · 时间为估算，不准就用「⏱ 校准」"));
+}
+/* 分词 + LCS 逐词比对 */
+const DW_WORD=/[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g;
+function dwWords(s){return (s||"").match(DW_WORD)||[];}
+function dwNorm(w){return (w||"").toLowerCase().replace(/[’']/g,"").replace(/-/g,"");}
+function dwDiff(A,B){
+  const n=A.length,mm=B.length;
+  const dp=[];for(let i=0;i<=n;i++)dp.push(new Uint16Array(mm+1));
+  for(let i=n-1;i>=0;i--)for(let j=mm-1;j>=0;j--){
+    dp[i][j]= A[i]===B[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j],dp[i][j+1]);
+  }
+  const ops=[];let i=0,j=0;
+  while(i<n&&j<mm){
+    if(A[i]===B[j]){ops.push({t:"same",a:i,b:j});i++;j++;}
+    else if(dp[i+1][j]>=dp[i][j+1]){ops.push({t:"miss",a:i});i++;}
+    else{ops.push({t:"extra",b:j});j++;}
+  }
+  while(i<n){ops.push({t:"miss",a:i});i++;}
+  while(j<mm){ops.push({t:"extra",b:j});j++;}
+  return ops;
+}
+function dwMask(sent){
+  return dwWords(sent).slice(0,60).map(w=>w[0]+"·".repeat(Math.max(0,w.length-1))).join(" ");
+}
+function dwRefresh(m,wrap){
+  const old=document.getElementById("dw_"+m.id);
+  if(old)old.replaceWith(buildDW(m,wrap));
+}
+function dwGo(m,wrap,i){
+  const meta=dwMeta(m);
+  if(!meta.sents.length)return;
+  const d=dictOf(m);
+  const ta=document.getElementById("dwta_"+m.id);
+  if(ta&&!d.ans[d.idx]&&ta.value.trim())d.drafts[d.idx]=ta.value;
+  d.idx=Math.max(0,Math.min(meta.sents.length-1,i));
+  save();dwStopLoop();dwRefresh(m,wrap);
+}
+function dwSubmit(m,wrap){
+  const meta=dwMeta(m);const d=dictOf(m);
+  const ta=document.getElementById("dwta_"+m.id);
+  if(!ta)return;
+  const txt=ta.value;
+  const i=d.idx;
+  const A=dwWords(meta.sents[i]),B=dwWords(txt);
+  const ops=dwDiff(A.map(dwNorm),B.map(dwNorm));
+  const same=ops.filter(o=>o.t==="same").length;
+  const acc=A.length?Math.round(same/A.length*100):0;
+  d.ans[i]={t:txt,acc:acc,at:today()};
+  delete d.drafts[i];
+  if(d.hideRes===i)delete d.hideRes;
+  save();
+  dwRefresh(m,wrap);
+  dwMaybeCompleteStep(m,wrap);
+}
+function dwMaybeCompleteStep(m,wrap){
+  const meta=dwMeta(m),d=dictOf(m);
+  if(!meta.sents.length)return;
+  let n=0;for(let i=0;i<meta.sents.length;i++)if(d.ans[i])n++;
+  if(n<meta.sents.length||m.steps.dictation)return;
+  m.steps.dictation=true;save();
+  if(wrap){
+    const st=wrap.querySelectorAll(".steps .step")[1];
+    if(st){st.classList.add("done");const c=st.querySelector(".step-check");if(c)c.textContent="✓";}
+    updateLadder(wrap,m);
+  }
+  renderHeader();renderStats();renderReview();renderCharts();
+}
+function dwSaveTranscript(m,wrap,txt){
+  m.transcript=(txt||"").trim();
+  delete dwMetaCache[m.id];
+  save();
+  const sw=document.getElementById("tsw_"+m.id);
+  if(sw){
+    sw.style.display=m.transcript?"":"none";
+    const inner=document.getElementById("ts_"+m.id);
+    if(inner&&m.transcript)renderTranscriptSection(m,inner);
+  }
+  dwRefresh(m,wrap);
+}
+function buildDW(m,wrap){
+  const d=dictOf(m);
+  const meta=dwMeta(m);
+  const box=el("div","dw");box.id="dw_"+m.id;
+
+  const head=el("div","dw-head");
+  head.appendChild(el("div","dw-h","✍️ 听写工作台"));
+  const prog=el("div","dw-prog");const fill=el("i");prog.appendChild(fill);head.appendChild(prog);
+  const pct=el("div","dw-pct","0%");head.appendChild(pct);
+  const edit=el("button","dw-chip",m.transcript?"改文稿":"贴文稿");
+  head.appendChild(edit);
+  box.appendChild(head);
+
+  const body=el("div","dw-body");box.appendChild(body);
+
+  /* --- 没有文稿：先贴文稿 --- */
+  const showEditor=()=>{
+    body.innerHTML="";
+    body.appendChild(el("div","dw-empty",
+      "把这段音频的英文文稿粘进来（原文网页上把 transcript 全选复制即可）。工作台会自动切成句子，一句一句循环播给你听写。"));
+    const ta=el("textarea","dw-ta");ta.style.minHeight="160px";
+    ta.placeholder="粘贴英文 transcript…";ta.value=m.transcript||"";
+    body.appendChild(ta);
+    const acts=el("div","dw-acts");
+    const sv=el("button","btn-mini","保存文稿并切句");
+    sv.onclick=()=>{if(!ta.value.trim()){ta.focus();return;}dwSaveTranscript(m,wrap,ta.value);};
+    acts.appendChild(sv);
+    if(m.transcript){
+      const cc=el("button","dw-chip","取消");cc.onclick=()=>dwRefresh(m,wrap);acts.appendChild(cc);
+    }
+    body.appendChild(acts);
+  };
+  edit.onclick=showEditor;
+
+  if(!meta.sents.length){showEditor();return box;}
+
+  /* --- 进度 --- */
+  let doneN=0,partN=0;
+  for(let i=0;i<meta.sents.length;i++){const a=d.ans[i];if(a){if(a.acc>=90)doneN++;else partN++;}}
+  const p=Math.round((doneN+partN)/meta.sents.length*100);
+  fill.style.width=p+"%";pct.textContent=p+"%";
+
+  const i=Math.max(0,Math.min(meta.sents.length-1,d.idx));
+  const cur=meta.sents[i];
+  const ans=d.ans[i];
+
+  /* --- 导航 --- */
+  const nav=el("div","dw-nav");
+  const prev=el("button","dw-chip","← 上一句");prev.onclick=()=>dwGo(m,wrap,i-1);
+  const next=el("button","dw-chip","下一句 →");next.onclick=()=>dwGo(m,wrap,i+1);
+  if(i===0)prev.disabled=true;
+  if(i===meta.sents.length-1)next.disabled=true;
+  nav.appendChild(prev);nav.appendChild(next);
+  nav.appendChild(el("div","dw-counter","第 "+(i+1)+" / "+meta.sents.length+" 句"));
+  const nx=el("button","dw-chip","↳ 跳到第一句未做");
+  nx.onclick=()=>{for(let k=0;k<meta.sents.length;k++)if(!d.ans[k]){dwGo(m,wrap,k);return;}dwMsg(m,"✓ 每句都听写过了。");};
+  nav.appendChild(nx);
+  body.appendChild(nav);
+
+  /* --- 逐句播放 / 循环 / 校准 --- */
+  const lp=el("div","dw-loop");
+  lp.appendChild(el("span","lbl","本句"));
+  const pb=el("button","btn-mini","▶ 播一遍");pb.onclick=()=>dwPlay(m,i,false);
+  const lb=el("button","btn-mini","🔁 循环");lb.style.background="var(--blue)";lb.style.borderBottomColor="var(--blue-d)";
+  lb.onclick=()=>dwPlay(m,i,true);
+  const sb=el("button","dw-chip","■ 停");sb.onclick=()=>{dwStopLoop();const a=playerAudio[m.id];if(a)a.pause();};
+  lp.appendChild(pb);lp.appendChild(lb);lp.appendChild(sb);
+  const cal=el("button","dw-chip","⏱ 校准起点");
+  cal.title="先播到这句真正开口的位置，再点这里。之后的句子会跟着一起变准。";
+  cal.onclick=()=>{
+    const a=playerAudio[m.id];
+    if(!a||!a.src){dwMsg(m,"⚠ 还没有音频。");return;}
+    d.marks[i]=Math.max(0,a.currentTime);save();dwRefresh(m,wrap);
+    dwMsg(m,"✓ 已把第 "+(i+1)+" 句的起点校准到 "+fmt(Math.floor(a.currentTime))+"。");
+  };
+  const bk=el("button","dw-chip","−1s");
+  bk.onclick=()=>{const st=dwStart(m,dwMeta(m),i);d.marks[i]=Math.max(0,st-1);save();dwRefresh(m,wrap);dwPlay(m,i,false);};
+  const fw=el("button","dw-chip","+1s");
+  fw.onclick=()=>{const st=dwStart(m,dwMeta(m),i);d.marks[i]=st+1;save();dwRefresh(m,wrap);dwPlay(m,i,false);};
+  lp.appendChild(cal);lp.appendChild(bk);lp.appendChild(fw);
+  if(d.marks[i]!=null){
+    const rs=el("button","dw-chip","撤销校准");
+    rs.onclick=()=>{delete d.marks[i];save();dwRefresh(m,wrap);};
+    lp.appendChild(rs);
+  }
+  const r=m.durSec?dwRange(m,meta,i):null;
+  lp.appendChild(el("span","dw-range",r?(fmt(Math.floor(r[0]))+" – "+fmt(Math.floor(r[1]))):"缺时长"));
+  body.appendChild(lp);
+
+  /* --- 输入区 --- */
+  const ta=el("textarea","dw-ta");ta.id="dwta_"+m.id;
+  ta.placeholder="不看文稿，把这一句听到的写下来…（⌘/Ctrl + Enter 提交比对）";
+  ta.value=(ans&&ans.t)||d.drafts[i]||"";
+  ta.addEventListener("keydown",e=>{
+    if((e.metaKey||e.ctrlKey)&&e.key==="Enter"){e.preventDefault();dwSubmit(m,wrap);}
+  });
+  body.appendChild(ta);
+
+  const acts=el("div","dw-acts");
+  const sub=el("button","btn-mini",ans?"重新比对":"✓ 提交比对");
+  sub.onclick=()=>dwSubmit(m,wrap);
+  acts.appendChild(sub);
+  const hintBtn=el("button","dw-chip",d.hint?"隐藏提示":"💡 提示");
+  hintBtn.onclick=()=>{d.hint=!d.hint;save();dwRefresh(m,wrap);};
+  acts.appendChild(hintBtn);
+  const skip=el("button","dw-chip","跳过这句");
+  skip.onclick=()=>dwGo(m,wrap,i+1);
+  acts.appendChild(skip);
+  body.appendChild(acts);
+
+  if(d.hint){
+    const wc=dwWords(cur).length;
+    body.appendChild(el("div","dw-tip","💡 本句 "+wc+" 词：<span class=\"mono\">"+escapeHtml(dwMask(cur))+"</span>"));
+  }
+  body.appendChild(el("div","dw-tip",'<span id="dwmsg_'+m.id+'">⌨ ⌘/Ctrl + Enter 提交 · 时间轴按字数估算，第一次用建议先给几句「⏱ 校准起点」，后面会自动跟着变准。</span>'));
+
+  /* --- 比对结果 --- */
+  if(ans&&d.hideRes!==i){
+    const A=dwWords(cur),B=dwWords(ans.t);
+    const ops=dwDiff(A.map(dwNorm),B.map(dwNorm));
+    const same=ops.filter(o=>o.t==="same").length;
+    const acc=A.length?Math.round(same/A.length*100):0;
+    const res=el("div","dw-res");
+    const cls=acc>=90?"good":(acc>=70?"mid":"bad");
+    res.appendChild(el("div","dw-score "+cls,
+      "准确率 "+acc+"%　·　对 "+same+" / "+A.length+" 词"+
+      (acc>=90?"　🎯 这句过了":(acc>=70?"　再听两遍补上漏掉的":"　别急，把循环开着多听几遍"))));
+    const oline=el("div","dw-line");oline.appendChild(el("span","k","原文"));
+    const uline=el("div","dw-line");uline.appendChild(el("span","k","你写的"));
+    const missed=[];
+    ops.forEach(o=>{
+      if(o.t==="same"){
+        oline.appendChild(el("span","dw-w ok",escapeHtml(A[o.a])));oline.appendChild(document.createTextNode(" "));
+        uline.appendChild(el("span","dw-w ok",escapeHtml(B[o.b])));uline.appendChild(document.createTextNode(" "));
+      }else if(o.t==="miss"){
+        const w=A[o.a];
+        const sp=el("span","dw-w miss",escapeHtml(w));
+        sp.title="点一下查这个词";
+        sp.onclick=()=>lookupWord(m,w,sp);
+        oline.appendChild(sp);oline.appendChild(document.createTextNode(" "));
+        if(dwNorm(w).length>=3)missed.push(w);
+      }else{
+        uline.appendChild(el("span","dw-w extra",escapeHtml(B[o.b])));uline.appendChild(document.createTextNode(" "));
+      }
+    });
+    res.appendChild(uline);res.appendChild(oline);
+    if(missed.length){
+      const row=el("div","dw-missrow");
+      row.appendChild(el("span","lbl","没听出来的词 → 点开查，确认后再收进生词本："));
+      const seen={};
+      missed.forEach(w=>{
+        const k=dwNorm(w);if(seen[k])return;seen[k]=1;
+        const c=el("button","dw-chip",escapeHtml(w));
+        c.onclick=()=>lookupWord(m,w,c);
+        row.appendChild(c);
+      });
+      res.appendChild(row);
+    }
+    const rr=el("div","dw-acts");
+    const again=el("button","dw-chip","🔁 再循环这句");again.onclick=()=>dwPlay(m,i,true);
+    const hide=el("button","dw-chip","收起结果");hide.onclick=()=>{d.hideRes=i;save();dwRefresh(m,wrap);};
+    rr.appendChild(again);rr.appendChild(hide);
+    if(i<meta.sents.length-1){
+      const nb=el("button","btn-mini","下一句 →");nb.onclick=()=>dwGo(m,wrap,i+1);rr.appendChild(nb);
+    }
+    res.appendChild(rr);
+    body.appendChild(res);
+  }
+
+  /* --- 句子进度点 --- */
+  const dots=el("div","dw-dots");
+  meta.sents.forEach((s,k)=>{
+    const a=d.ans[k];
+    const dot=el("button","dw-dot"+(a?(a.acc>=90?" done":" part"):"")+(k===i?" cur":""),String(k+1));
+    dot.title=(a?("准确率 "+a.acc+"%"):"未听写")+"："+s.slice(0,60);
+    dot.onclick=()=>dwGo(m,wrap,k);
+    dots.appendChild(dot);
+  });
+  body.appendChild(dots);
+  body.appendChild(el("div","dw-dotlbl","■ 绿=90% 以上　■ 橙=还有漏词　□ 灰=没听写。点方块直接跳。"));
+
+  if(doneN+partN>=meta.sents.length){
+    body.appendChild(el("div","dw-done",
+      "🎉 全篇 "+meta.sents.length+" 句都听写过了，第 2 步已自动打勾。接下来解锁文稿通读一遍，把还没弄懂的词查掉，就可以进第 3 步背诵了。"));
+  }
+  return box;
+}
+
+/* ---------------- audio storage (IndexedDB) + player ---------------- */
 let _db=null, _idbOK=(typeof indexedDB!=="undefined");
 function idb(){return new Promise((res,rej)=>{
   if(_db)return res(_db);
@@ -944,26 +1391,29 @@ function idbGet(k){return idb().then(db=>new Promise((res,rej)=>{
 function idbDel(k){return idb().then(db=>new Promise((res)=>{
   const t=db.transaction("files","readwrite");t.objectStore("files").delete(k);
   t.oncomplete=()=>res();})).catch(()=>{});}
-const audioURLCache={};
-const sessionBlobs={};
+
+const audioURLCache={};       // id -> objectURL (persisted blobs via IDB)
+const sessionBlobs={};        // id -> objectURL (fallback when IDB unavailable)
 function getAudioURL(id){
   if(audioURLCache[id])return Promise.resolve(audioURLCache[id]);
   if(sessionBlobs[id])return Promise.resolve(sessionBlobs[id]);
   return idbGet(id).then(rec=>{
     if(rec&&rec.blob){const u=URL.createObjectURL(rec.blob);audioURLCache[id]=u;return u;}
-    return cloudAudioURL(id);
+    return cloudAudioURL(id);   // not local -> try cloud (synced from another device)
   }).catch(()=>cloudAudioURL(id));
 }
 function cloudAudioURL(id){
   const m=state.materials.find(x=>x.id===id);
   if(!m||!m.audioCloud||!fb.ok||!fb.user||!fb.storage)return null;
   return fb.storage.ref("audio/"+fb.user.uid+"/"+id).getDownloadURL()
-    .then(url=>{audioURLCache[id]=url;return url;})
+    .then(url=>{audioURLCache[id]=url;return url;})   // https URL streams directly
     .catch(()=>null);
 }
+
 function buildPlayer(m,wrap){
   const box=el("div","player");
   const hasFile=!!m.audioName;
+
   if(!hasFile){
     box.classList.add("player-empty");
     box.innerHTML='<div class="lbl">🎧 载入本地音频，就能在这里边听边听写</div>';
@@ -973,20 +1423,28 @@ function buildPlayer(m,wrap){
     label.appendChild(inp);
     box.appendChild(label);
     box.appendChild(el("div","player-hint",
-      '⚠ 本卡片的内嵌浏览器<b>不支持 MP3</b>，请载入 <b>OGG / WAV / Opus</b> 格式。<br>把 NPR 音频下载后，若是 mp3，可让我帮你转成 ogg，再从这里选择本地文件。文件存在本机，下次打开还在；登录后还会自动备份到云端。'));
+      '把音频下载到本机，从这里选它就行（mp3 / m4a / ogg / wav 都可以）。<br>文件只存在你这台电脑上，下次打开还在；导出的进度备份不含音频。'));
     return box;
   }
+
+  // has file -> player: native <audio controls> for reliable playback + method-specific extras
   const audio=el("audio");audio.controls=true;audio.preload="metadata";audio.loop=!!m._loop;
   audio.style.width="100%";audio.style.marginBottom="2px";
   box.appendChild(audio);
+
   const status=el("div","player-hint");status.style.marginTop="8px";status.textContent="载入中…";
   box.appendChild(status);
+
   const rate0=m._rate||1;
+
+  // extras: back 5s + loop
   const row=el("div","pl-row");row.style.marginTop="14px";
   const back=el("button","pl-btn sm","⟲5");back.title="后退 5 秒";
   const loop=el("button","pl-btn sm"+(m._loop?" on":""),"🔁");loop.title="循环播放";
   row.appendChild(back);row.appendChild(loop);
   box.appendChild(row);
+
+  // speeds
   const spRow=el("div","pl-speeds");
   spRow.appendChild(el("span","slbl","语速"));
   [0.5,0.75,1,1.25].forEach(r=>{
@@ -995,6 +1453,8 @@ function buildPlayer(m,wrap){
     spRow.appendChild(b);
   });
   box.appendChild(spRow);
+
+  // filename + change/remove
   const nameRow=el("div","pl-row");nameRow.style.marginTop="12px";
   nameRow.appendChild(el("div","pl-name","♪ "+escapeHtml(m.audioName)));
   const chgInp=el("input");chgInp.type="file";chgInp.accept="audio/*";chgInp.style.display="none";
@@ -1005,7 +1465,10 @@ function buildPlayer(m,wrap){
   nameRow.appendChild(chgInp);nameRow.appendChild(chg);nameRow.appendChild(rm);
   box.appendChild(nameRow);
   box.appendChild(el("div","player-hint","⌨ 空格 播放/暂停 · ←/→ 后退/前进 5 秒（先点一下播放器以选中）"));
-  currentAudio=audio;
+
+  // wire up
+  currentAudio=audio;                                       // 新展开的播放器即为当前
+  playerAudio[m.id]=audio;                                  // 听写工作台逐句循环要用它
   audio.addEventListener("play",()=>{currentAudio=audio;});
   box.addEventListener("pointerdown",()=>{currentAudio=audio;},true);
   back.onclick=()=>{audio.currentTime=Math.max(0,audio.currentTime-5);};
@@ -1018,7 +1481,7 @@ function buildPlayer(m,wrap){
   audio.addEventListener("error",()=>{
     const codes={1:"加载被中断",2:"网络错误",3:"解码失败（编码不支持）",4:"格式不支持"};
     const c=audio.error?audio.error.code:0;
-    status.innerHTML='⚠ 播放失败：'+(codes[c]||"未知错误")+'。请载入 <b>OGG / WAV / Opus</b> 格式（内嵌浏览器不支持 MP3）。是 mp3 就发我帮你转成 ogg。';
+    status.innerHTML='⚠ 播放失败：'+(codes[c]||"未知错误")+'。换一个音频文件试试（mp3 / m4a / ogg / wav），或确认文件没有损坏。';
   });
   getAudioURL(m.id).then(url=>{
     if(!url){status.innerHTML='⚠ 音频未能载入（可能被浏览器清理）。点『更换』重新选择文件。';return;}
@@ -1026,13 +1489,16 @@ function buildPlayer(m,wrap){
   }).catch(()=>{status.innerHTML='⚠ 读取本机存储失败。点『更换』重新选择文件。';});
   return box;
 }
+
 function handleFile(m,f){
   if(!f)return;
+  dwStopLoop();delete playerAudio[m.id];
   m.audioName=f.name;m.audioType=f.type;m.audioCloud=false;
   if(audioURLCache[m.id]){const u=audioURLCache[m.id];if(u&&u.indexOf("blob:")===0)URL.revokeObjectURL(u);delete audioURLCache[m.id];}
   if(sessionBlobs[m.id]){URL.revokeObjectURL(sessionBlobs[m.id]);delete sessionBlobs[m.id];}
   const finish=()=>{save();render();cloudUploadAudio(m,f);};
   idbPut(m.id,{blob:f,name:f.name}).then(finish).catch(()=>{
+    // IDB failed -> session-only fallback
     sessionBlobs[m.id]=URL.createObjectURL(f);finish();
   });
 }
@@ -1045,15 +1511,8 @@ function cloudUploadAudio(m,f){
       .catch(e=>{console.warn("audio upload failed",e);setSyncUI("error");});
   }catch(e){console.warn(e);}
 }
-function syncPendingAudio(){
-  if(!fb.ok||!fb.user||!fb.storage)return;
-  state.materials.forEach(m=>{
-    if(m.audioName&&!m.audioCloud){
-      idbGet(m.id).then(rec=>{if(rec&&rec.blob)cloudUploadAudio(m,rec.blob);});
-    }
-  });
-}
 function removeAudio(m){
+  dwStopLoop();delete playerAudio[m.id];
   const u=audioURLCache[m.id];if(u&&u.indexOf("blob:")===0)URL.revokeObjectURL(u);delete audioURLCache[m.id];
   if(sessionBlobs[m.id]){URL.revokeObjectURL(sessionBlobs[m.id]);delete sessionBlobs[m.id];}
   idbDel(m.id);
@@ -1064,6 +1523,7 @@ function removeAudio(m){
 /* ---------------- 查词 + 生词本 ---------------- */
 function youdaoURL(w){return "https://www.youdao.com/result?word="+encodeURIComponent(w)+"&lang=en";}
 function normWord(s){return (s||"").trim().toLowerCase().replace(/[^a-z'’ -]+/g," ").replace(/\s+/g," ").replace(/^[\s'’-]+|[\s'’-]+$/g,"");}
+
 function buildVocab(m){
   m.vocab=m.vocab||[];
   const box=el("div","vocab");
@@ -1092,7 +1552,7 @@ function renderVocabList(m){
   if(!m.vocab||m.vocab.length===0){vl.appendChild(el("div","vocab-empty","还没有生词。点文稿里的单词、或用上面搜索框查词，会自动记到这里。"));return;}
   m.vocab.forEach(v=>{
     const it=el("div","vocab-item"+(v.mastered?" mastered":""));
-    const w=el("span","vw",escapeHtml(v.w));w.title="重新查询";w.onclick=()=>lookupWord(m,v.w,w);
+    const w=el("span","vw",escapeHtml(v.w));w.style.cursor="pointer";w.title="重新查询";w.onclick=()=>lookupWord(m,v.w,w);
     it.appendChild(w);
     if(v.phonetic)it.appendChild(el("span","vph",escapeHtml(v.phonetic)));
     it.appendChild(el("span","vd",escapeHtml(v.def||v.note||"—")));
@@ -1103,6 +1563,7 @@ function renderVocabList(m){
     vl.appendChild(it);
   });
 }
+function playSay(url){try{const a=new Audio(url);a.play().catch(()=>{});}catch(e){}}
 function speakTTS(w){try{if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(w);u.lang="en-US";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u);}}catch(e){}}
 function sayWord(entry){
   const w=(entry&&entry.w)||"";
@@ -1122,8 +1583,8 @@ function lookupWord(m,raw,anchor){
       if(res.meanings[0]){if(!entry.def)entry.def=res.meanings[0].def||"";if(!entry.ex)entry.ex=res.meanings[0].ex||"";if(!entry.pos)entry.pos=res.meanings[0].pos||"";}
       if(!entry.audio)entry.audio=res.audio||"";
     }
-    if(res||isPhrase){ renderResult(m,entry,"ok",anchor); }
-    else { renderResult(m,entry,"fail",anchor); suggestWords(m,w); }
+    if(res||isPhrase){ renderResult(m,entry,"ok",anchor); }      // 词组即使无英文释义也可保存；不再自动收藏
+    else { renderResult(m,entry,"fail",anchor); suggestWords(m,w); }  // 单词查不到 → 按发音推荐
   });
 }
 function addToVocab(m,entry,anchor){
@@ -1133,6 +1594,13 @@ function addToVocab(m,entry,anchor){
   renderResult(m,entry,"ok",anchor);
 }
 function refreshTranscript(m){const box=document.getElementById("ts_"+m.id);if(box)renderTranscriptSection(m,box);}
+function hasCJK(s){return /[\u4e00-\u9fff]/.test(s||"");}
+function fetchCN(word){   // 英译中（MyMemory，免费、跨域、国内可访问）
+  return fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(word)+"&langpair=en|zh-CN")
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{const t=d&&d.responseData&&d.responseData.translatedText?String(d.responseData.translatedText).trim():"";return hasCJK(t)?t:"";})
+    .catch(()=>"");
+}
 function fetchDef(word){
   return fetch("https://api.dictionaryapi.dev/api/v2/entries/en/"+encodeURIComponent(word))
     .then(r=>r.ok?r.json():null).then(data=>{
@@ -1145,13 +1613,13 @@ function fetchDef(word){
       return {word:e.word||word,phonetic:phonetic,audio:audio,meanings:meanings};
     }).catch(()=>null);
 }
-function resultCard(m,entry,st,anchor){
+function resultCard(m,entry,state,anchor){
   const c=el("div","rescard");
   const head=el("div");
   head.innerHTML='<span class="rw">'+escapeHtml(entry.w)+'</span>'+(entry.phonetic?'<span class="rph">'+escapeHtml(entry.phonetic)+'</span>':'');
   c.appendChild(head);
-  if(st==="loading"){c.appendChild(el("div","rdef","查询中…"));}
-  else if(st==="fail"){c.appendChild(el("div","rdef","没查到该词，点『有道翻译』查看释义 ↗"));}
+  if(state==="loading"){c.appendChild(el("div","rdef","查询中…"));}
+  else if(state==="fail"){c.appendChild(el("div","rdef","没查到该词，点『有道翻译』查看释义 ↗"));}
   else{
     if(entry.pos)c.appendChild(el("div","rpos",escapeHtml(entry.pos)));
     if(entry.def)c.appendChild(el("div","rdef",escapeHtml(entry.def)));
@@ -1160,7 +1628,7 @@ function resultCard(m,entry,st,anchor){
   const row=el("div","rrow");
   const s=el("button","saybtn","🔊 发音");s.title="听发音，对照跟读";s.onclick=()=>sayWord(entry);row.appendChild(s);
   const yd=el("a","ydlink");yd.textContent="有道翻译 ↗";yd.href=youdaoURL(entry.w);yd.target="_blank";yd.rel="noopener";row.appendChild(yd);
-  if(st==="ok"){
+  if(state==="ok"){
     if(m.vocab&&m.vocab.some(v=>v.w===entry.w)){row.appendChild(el("span","savedtag","已在生词本 ✓"));}
     else{const add=el("button","addvbtn","➕ 加入生词本");add.onclick=()=>addToVocab(m,entry,anchor);row.appendChild(add);}
   }
@@ -1187,12 +1655,12 @@ function showPopAt(anchor,node){
   if(left+pw>vwR-10)left=vwR-pw-10;if(left<window.scrollX+8)left=window.scrollX+8;
   p.style.left=left+"px";p.style.top=top+"px";
 }
-function renderResult(m,entry,st,anchor){
+function renderResult(m,entry,state,anchor){
   const lk=document.getElementById("lk_"+m.id);
-  if(lk){lk.innerHTML="";lk.appendChild(resultCard(m,entry,st,null));}
+  if(lk){lk.innerHTML="";lk.appendChild(resultCard(m,entry,state,null));}
   if(anchor){
-    if(st==="loading"){popWord=entry.w;showPopAt(anchor,resultCard(m,entry,st,anchor));}
-    else if(popEl&&popEl.style.display!=="none"&&popWord===entry.w){popEl.innerHTML="";popEl.appendChild(resultCard(m,entry,st,anchor));}
+    if(state==="loading"){popWord=entry.w;showPopAt(anchor,resultCard(m,entry,state,anchor));}
+    else if(popEl&&popEl.style.display!=="none"&&popWord===entry.w){popEl.innerHTML="";popEl.appendChild(resultCard(m,entry,state,anchor));}
   }
 }
 function renderTranscriptSection(m,box){
@@ -1220,7 +1688,7 @@ function buildTranscriptEl(m){
   const d=el("div","transcript");
   const text=m.transcript||"";
   const lower=text.toLowerCase();
-  const terms=(m.vocab||[]).map(v=>v.w).filter(Boolean).sort((a,b)=>b.length-a.length);
+  const terms=(m.vocab||[]).map(v=>v.w).filter(Boolean).sort((a,b)=>b.length-a.length); // 词组优先匹配
   const isWordChar=c=>/[a-z0-9'’]/.test(c||"");
   let i=0;
   while(i<text.length){
@@ -1253,6 +1721,8 @@ function buildTranscriptEl(m){
   }
   return d;
 }
+
+/* 听音找词（Datamuse sounds-like）：根据不标准拼写推荐发音相近的正确单词 */
 function soundsLike(q){
   return fetch("https://api.datamuse.com/words?max=10&sl="+encodeURIComponent(q))
     .then(r=>r.ok?r.json():[])
@@ -1276,25 +1746,29 @@ function renderSuggests(m,list){
   sg.appendChild(wrap);
 }
 
-/* ---------------- 图表 ---------------- */
+/* ---------------- charts ---------------- */
 function renderCharts(){
   const done=state.materials.filter(isDone).length;
   const inprog=state.materials.filter(m=>!isDone(m)&&stepsDone(m)>0).length;
   const goal=state.settings.goal;
   const started=state.materials.length;
   const notyet=Math.max(0, goal-Math.max(started,done+inprog));
+
   const jData=[done, inprog, notyet];
-  $("#journeyLegend").innerHTML='<span style="color:#58cc02">■</span> 已上线 &nbsp; <span style="color:#a5ed6e">■</span> 进行中 &nbsp; <span style="color:#e5e5e5">■</span> 待开始';
+  $("#journeyLegend").innerHTML='<span style="color:#58cc02">■</span> 已完成 &nbsp; <span style="color:#a5ed6e">■</span> 进行中 &nbsp; <span style="color:#e5e5e5">■</span> 待开始';
+
   if(!journeyChart){
     journeyChart=new Chart($("#journeyChart"),{
       type:"doughnut",
-      data:{labels:["已上线","进行中","待开始"],
+      data:{labels:["已完成","进行中","待开始"],
         datasets:[{data:jData,backgroundColor:["#58cc02","#a5ed6e","#e5e5e5"],borderWidth:3,borderColor:"#fff"}]},
       options:{responsive:true,maintainAspectRatio:false,cutout:"64%",
         plugins:{legend:{display:false},
           tooltip:{callbacks:{label:c=>c.label+"："+c.parsed+" 篇"}}}}
     });
   }else{journeyChart.data.datasets[0].data=jData;journeyChart.update();}
+
+  // minutes last 14 days
   const labels=[],vals=[];
   const byDate={};state.materials.forEach(m=>m.log.forEach(l=>{byDate[l.date]=(byDate[l.date]||0)+l.minutes;}));
   (state.studyLog||[]).forEach(l=>{byDate[l.date]=(byDate[l.date]||0)+l.minutes;});
@@ -1312,7 +1786,7 @@ function renderCharts(){
   }else{minutesChart.data.labels=labels;minutesChart.data.datasets[0].data=vals;minutesChart.update();}
 }
 
-/* ---------------- 添加材料 / 导入导出 ---------------- */
+/* ---------------- modal / add ---------------- */
 function openModal(){
   $("#levelTip").innerHTML=LEVEL_TIPS[state.settings.level]||LEVEL_TIPS.beginner;
   ["fTitle","fNpr","fAudio","fDur","fText"].forEach(id=>$("#"+id).value="");
@@ -1320,11 +1794,12 @@ function openModal(){
 }
 function closeModal(){$("#modalBg").classList.remove("show");}
 $("#addBtn").onclick=openModal;
+/* export / import progress (for moving between computers) */
 $("#exportBtn").onclick=()=>{
   const data=JSON.stringify(state,(k,v)=>k==="_open"?undefined:v,2);
   const blob=new Blob([data],{type:"application/json"});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");a.href=url;a.download="啃料电台-进度备份-"+today()+".json";
+  const a=document.createElement("a");a.href=url;a.download="Dictation工作台-进度备份-"+today()+".json";
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1500);
 };
@@ -1341,7 +1816,7 @@ $("#importFile").onchange=()=>{
       if(!state.settings)state.settings={goal:10,level:"beginner"};
       state.materials.forEach(m=>{m._open=false;});
       save();render();
-      alert("导入成功！共 "+state.materials.length+" 档材料。音频请在本机各档里重新载入。");
+      alert("导入成功！共 "+state.materials.length+" 份素材。音频请在本机各份素材里重新载入。");
     }catch(e){alert("无法识别该文件，请选择本 app 导出的 .json 备份。");}
     $("#importFile").value="";
   };
@@ -1349,36 +1824,26 @@ $("#importFile").onchange=()=>{
 };
 $("#cancelBtn").onclick=closeModal;
 $("#modalBg").onclick=e=>{if(e.target===$("#modalBg"))closeModal();};
-$("#copyNpr").onclick=()=>{
-  const txt="https://www.npr.org";const btn=$("#copyNpr");
-  const done=()=>{btn.textContent="已复制 ✓";setTimeout(()=>btn.textContent="复制",1500);};
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done));
-  }else{fallbackCopy(txt,done);}
-};
-function fallbackCopy(txt,cb){
-  try{const ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";
-    document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);cb&&cb();}
-  catch(e){}
-}
 $("#saveBtn").onclick=()=>{
   const title=$("#fTitle").value.trim();
   if(!title){$("#fTitle").focus();$("#fTitle").style.borderColor="var(--danger)";return;}
   const m={id:uid(),title,nprUrl:$("#fNpr").value.trim(),audioUrl:$("#fAudio").value.trim(),
     durSec:parseDur($("#fDur").value),transcript:$("#fText").value.trim(),
     createdAt:today(),steps:{select:true,dictation:false,recite:false,speed:false},
-    reciteTimes:[],reciteDate:null,lastReviewAt:null,reviewCount:0,log:[],notes:"",vocab:[],_open:true};
+    reciteTimes:[],reciteDate:null,lastReviewAt:null,reviewCount:0,log:[],notes:"",vocab:[],
+    dict:{idx:0,marks:{},ans:{},drafts:{}},_open:true};
   state.materials.unshift(m);closeModal();render();
 };
-
-/* ---------------- 音频键盘快捷键 ---------------- */
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+/* 音频键盘快捷键：空格 播放/暂停，←/→ 前后 5 秒（作用于当前选中的播放器） */
 let currentAudio=null;
 document.addEventListener("keydown",e=>{
   const t=e.target,tag=t&&t.tagName;
-  if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT"||(t&&t.isContentEditable))return;
-  if(tag==="AUDIO")return;
-  if(document.querySelector(".modal-bg.show"))return;
-  if(currentAudio&&!document.contains(currentAudio))currentAudio=null;
+  if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT"||(t&&t.isContentEditable))return;  // 打字时不拦截
+  if(tag==="AUDIO")return;                         // 播放器聚焦时交给原生控件
+  const mb=document.getElementById("modalBg");
+  if(mb&&mb.classList.contains("show"))return;
+  if(currentAudio&&!document.contains(currentAudio))currentAudio=null;                  // 播放器已被移除
   if(!currentAudio||!currentAudio.src)return;
   if(e.code==="Space"||e.key===" "||e.key==="Spacebar"){
     e.preventDefault();
@@ -1394,11 +1859,9 @@ document.addEventListener("keydown",e=>{
 function escapeHtml(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function escapeAttr(s){return escapeHtml(s);}
 
-/* ================================================================
-   Firebase：邮箱登录 + 云同步
-   配置在网页内完成（点「☁ 配置云同步」粘贴 firebaseConfig），
-   存在本机 localStorage；此处 PASTE_ 占位仅作备用硬编码位。
-   ================================================================ */
+/* ---------------- Firebase：登录 + 云同步（可选，未配置则自动本机模式） ---------------- */
+/* ====== 把你 Firebase 项目的网页配置粘到这里（替换 PASTE_ 开头的值） ======
+   在 Firebase 控制台 → 项目设置 → 你的应用 → SDK 配置里复制。这些值可公开，安全靠后端规则保障。 */
 const firebaseConfig = {
   apiKey:            "PASTE_apiKey",
   authDomain:        "PASTE_projectId.firebaseapp.com",
@@ -1406,9 +1869,9 @@ const firebaseConfig = {
   storageBucket:     "PASTE_projectId.appspot.com",
   appId:             "PASTE_appId"
 };
-const CFG_KEY="kenliao_fbconfig";
+/* ====================================================================== */
+
 let fb={ok:false,auth:null,db:null,storage:null,user:null};
-let fbCfg=null;
 let _pushTimer=null,_lastPushedAt=0,_unsub=null,_applyingRemote=false;
 function skipRuntime(k,v){return (k==="_open"||k==="_unlocked")?undefined:v;}
 function normalizeState(){
@@ -1418,46 +1881,17 @@ function normalizeState(){
   state.materials.forEach(m=>{m._open=false;m.log=m.log||[];m.reciteTimes=m.reciteTimes||[];m.vocab=m.vocab||[];
     m.steps=m.steps||{select:true,dictation:false,recite:false,speed:false};});
 }
-function loadFbConfig(){
-  try{const c=JSON.parse(localStorage.getItem(CFG_KEY));if(c&&c.apiKey)return c;}catch(e){}
-  if(firebaseConfig.apiKey&&firebaseConfig.apiKey.indexOf("PASTE")!==0)return firebaseConfig;
-  return null;
-}
-function parseFirebaseConfig(text){
-  if(!text)return null;
-  const grab=k=>{const m=text.match(new RegExp(k+'\\s*:\\s*["\']([^"\']+)["\']'));return m?m[1]:"";};
-  const cfg={apiKey:grab("apiKey"),authDomain:grab("authDomain"),projectId:grab("projectId"),
-    storageBucket:grab("storageBucket"),messagingSenderId:grab("messagingSenderId"),appId:grab("appId")};
-  if(!cfg.apiKey||!cfg.projectId)return null;
-  if(!cfg.authDomain)cfg.authDomain=cfg.projectId+".firebaseapp.com";
-  if(!cfg.storageBucket)cfg.storageBucket=cfg.projectId+".appspot.com";
-  return cfg;
-}
 function fbInit(){
-  if(typeof firebase==="undefined"){setSyncUI("local");updateAuthUI();return;}
-  fbCfg=loadFbConfig();
-  if(!fbCfg){setSyncUI("unconfigured");updateAuthUI();return;}
+  if(typeof firebase==="undefined"){setSyncUI("local");return;}
+  if(!firebaseConfig.apiKey||firebaseConfig.apiKey.indexOf("PASTE")===0){setSyncUI("unconfigured");updateAuthUI();return;}
   try{
-    if(!firebase.apps.length)firebase.initializeApp(fbCfg);
+    firebase.initializeApp(firebaseConfig);
     fb.auth=firebase.auth();fb.db=firebase.firestore();
     try{fb.storage=firebase.storage();}catch(e){fb.storage=null;}
     fb.ok=true;
     fb.auth.onAuthStateChanged(onAuth);
     setSyncUI("signedout");updateAuthUI();
-  }catch(e){console.warn("firebase init failed",e);fb.ok=false;setSyncUI("error");updateAuthUI();}
-}
-function fbReinit(cfg){
-  try{localStorage.setItem(CFG_KEY,JSON.stringify(cfg));}catch(e){}
-  const go=()=>{fb={ok:false,auth:null,db:null,storage:null,user:null};fbInit();};
-  if(typeof firebase!=="undefined"&&firebase.apps&&firebase.apps.length){
-    return firebase.app().delete().then(go).catch(go);
-  }
-  go();return Promise.resolve();
-}
-function fbReset(){
-  try{localStorage.removeItem(CFG_KEY);}catch(e){}
-  const go=()=>{fb={ok:false,auth:null,db:null,storage:null,user:null};fbCfg=null;setSyncUI("unconfigured");updateAuthUI();};
-  if(typeof firebase!=="undefined"&&firebase.apps&&firebase.apps.length){firebase.app().delete().then(go).catch(go);}else go();
+  }catch(e){console.warn("firebase init failed",e);setSyncUI("local");}
 }
 function onAuth(user){
   fb.user=user;
@@ -1465,12 +1899,11 @@ function onAuth(user){
   updateAuthUI();
   if(!user){setSyncUI("signedout");return;}
   setSyncUI("loading");
-  syncPendingAudio();
   const ref=fb.db.collection("users").doc(user.uid);
   _unsub=ref.onSnapshot(snap=>{
     const data=snap.data();
-    if(!data||!data.state){ pushNow(); return; }
-    if(data.updatedAt && data.updatedAt===_lastPushedAt){ setSyncUI("synced"); return; }
+    if(!data||!data.state){ pushNow(); return; }              // no remote yet -> seed from local
+    if(data.updatedAt && data.updatedAt===_lastPushedAt){ setSyncUI("synced"); return; } // our own echo
     try{
       const remote=JSON.parse(data.state);
       const rU=remote.updatedAt||0, lU=state.updatedAt||0;
@@ -1492,92 +1925,29 @@ function pushNow(){
     .set({state:JSON.stringify(state,skipRuntime),updatedAt:_lastPushedAt},{merge:true})
     .then(()=>setSyncUI("synced")).catch(e=>{console.warn("push err",e);setSyncUI("error");});
 }
-
-/* ---------------- 邮箱登录 / 注册 ---------------- */
-let authMode="login";
-function openAuth(){
-  authMode="login";syncAuthTabs();clearAuthMsg();
-  $("#aPass").value="";
-  $("#authModalBg").classList.add("show");
-  setTimeout(()=>{const e=$("#aEmail");if(!e.value)e.focus();else $("#aPass").focus();},60);
+function signIn(){
+  if(!fb.ok)return;
+  const p=new firebase.auth.GoogleAuthProvider();
+  fb.auth.signInWithPopup(p).catch(err=>{
+    if(err&&(err.code==="auth/popup-blocked"||err.code==="auth/popup-closed-by-user"||err.code==="auth/cancelled-popup-request")){
+      try{fb.auth.signInWithRedirect(p);}catch(e){}
+    } else { alert("登录失败："+((err&&err.message)||err)); }
+  });
 }
-function closeAuth(){$("#authModalBg").classList.remove("show");}
-function syncAuthTabs(){
-  $("#tabLogin").classList.toggle("on",authMode==="login");
-  $("#tabSignup").classList.toggle("on",authMode==="signup");
-  $("#aSubmit").textContent=authMode==="login"?"登录":"注册并登录";
-  $("#authTitle").textContent=authMode==="login"?"登录以云同步":"创建你的同步账号";
-  $("#aPass").setAttribute("autocomplete",authMode==="login"?"current-password":"new-password");
-}
-function authMsg(kind,msg){
-  const e=$("#aErr"),o=$("#aOk");
-  e.classList.remove("show");o.classList.remove("show");
-  if(!msg)return;
-  const box=kind==="err"?e:o;
-  box.textContent=msg;box.classList.add("show");
-}
-function clearAuthMsg(){$("#aErr").classList.remove("show");$("#aOk").classList.remove("show");}
-function authErrText(err){
-  const c=(err&&err.code)||"";
-  const map={
-    "auth/invalid-email":"邮箱格式不对，检查一下有没有打错。",
-    "auth/user-not-found":"这个邮箱还没注册。点上方「注册新账号」创建一个。",
-    "auth/wrong-password":"密码不正确。忘了可点「忘记密码」。",
-    "auth/invalid-credential":"邮箱或密码不正确。",
-    "auth/invalid-login-credentials":"邮箱或密码不正确。",
-    "auth/email-already-in-use":"这个邮箱已经注册过了，直接登录即可。",
-    "auth/weak-password":"密码太短了，至少 6 位。",
-    "auth/too-many-requests":"尝试次数太多，稍等几分钟再试。",
-    "auth/network-request-failed":"连不上 Firebase 服务器（国内需自备网络环境），请检查网络后重试。"
-  };
-  return map[c]||("出错了："+((err&&err.message)||c||"未知错误"));
-}
-$("#tabLogin").onclick=()=>{authMode="login";syncAuthTabs();clearAuthMsg();};
-$("#tabSignup").onclick=()=>{authMode="signup";syncAuthTabs();clearAuthMsg();};
-$("#aCancel").onclick=closeAuth;
-$("#authModalBg").onclick=e=>{if(e.target===$("#authModalBg"))closeAuth();};
-$("#aReconfig").onclick=()=>{closeAuth();openSetup();};
-$("#aSubmit").onclick=()=>{
-  if(!fb.ok){authMsg("err","当前环境未加载 Firebase（在浏览器中打开本页后再试）。");return;}
-  const email=$("#aEmail").value.trim(),pw=$("#aPass").value;
-  if(!email){authMsg("err","先填邮箱。");return;}
-  if(pw.length<6){authMsg("err","密码至少 6 位。");return;}
-  const btn=$("#aSubmit");btn.disabled=true;
-  btn.textContent=authMode==="login"?"登录中…":"注册中…";
-  clearAuthMsg();
-  const p=authMode==="login"
-    ? fb.auth.signInWithEmailAndPassword(email,pw)
-    : fb.auth.createUserWithEmailAndPassword(email,pw);
-  p.then(()=>{btn.disabled=false;syncAuthTabs();closeAuth();})
-   .catch(err=>{btn.disabled=false;syncAuthTabs();authMsg("err",authErrText(err));});
-};
-$("#aForgot").onclick=()=>{
-  if(!fb.ok){authMsg("err","当前环境未加载 Firebase。");return;}
-  const email=$("#aEmail").value.trim();
-  if(!email){authMsg("err","先在邮箱框里填上你的邮箱，再点这里。");return;}
-  fb.auth.sendPasswordResetEmail(email)
-    .then(()=>authMsg("ok","重置邮件已发到 "+email+"，去邮箱点链接设置新密码。"))
-    .catch(err=>authMsg("err",authErrText(err)));
-};
-$("#aPass").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("#aSubmit").click();}});
-$("#aEmail").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("#aPass").focus();}});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeAuth();closeSetup();}});
-
-/* ---------------- 顶栏登录区 + 同步状态 ---------------- */
 function updateAuthUI(){
   const a=document.getElementById("authArea");if(!a)return;a.innerHTML="";
   if(!fb.ok){
-    const b=el("button","authbtn","☁ 配置云同步");b.onclick=openSetup;a.appendChild(b);
+    if(firebaseConfig.apiKey.indexOf("PASTE")===0){
+      const t=el("span","who","（未配置同步）");a.appendChild(t);
+    }
     return;
   }
   if(fb.user){
-    a.appendChild(el("span","who",escapeHtml(fb.user.email||"已登录")));
-    const out=el("button","authbtn ghost","退出");
-    out.onclick=()=>{fb.auth.signOut();};
+    a.appendChild(el("span","who",escapeHtml(fb.user.displayName||fb.user.email||"已登录")));
+    const out=el("button","authbtn ghost","退出");out.onclick=()=>fb.auth.signOut();
     a.appendChild(out);
   }else{
-    const b=el("button","authbtn","登录以同步");b.onclick=openAuth;a.appendChild(b);
-    const s=el("button","authbtn ghost","⚙");s.title="重新配置云同步";s.onclick=openSetup;a.appendChild(s);
+    const b=el("button","authbtn","登录以同步");b.onclick=signIn;a.appendChild(b);
   }
 }
 function setSyncUI(s){
@@ -1588,37 +1958,7 @@ function setSyncUI(s){
   e.className="synced "+(s==="error"?"err":(s==="synced"?"ok":""));
 }
 
-/* ---------------- 配置向导弹窗 ---------------- */
-function openSetup(){
-  $("#cfgErr").classList.remove("show");$("#cfgOk").classList.remove("show");
-  $("#setupModalBg").classList.add("show");
-}
-function closeSetup(){$("#setupModalBg").classList.remove("show");}
-function cfgMsg(kind,msg){
-  const e=$("#cfgErr"),o=$("#cfgOk");
-  e.classList.remove("show");o.classList.remove("show");
-  if(!msg)return;
-  const box=kind==="err"?e:o;box.textContent=msg;box.classList.add("show");
-}
-$("#cfgCancel").onclick=closeSetup;
-$("#setupModalBg").onclick=e=>{if(e.target===$("#setupModalBg"))closeSetup();};
-$("#cfgSave").onclick=()=>{
-  const cfg=parseFirebaseConfig($("#cfgText").value);
-  if(!cfg){cfgMsg("err","没识别出有效配置。请把控制台里 const firebaseConfig = { … } 整段（含花括号）原样粘贴。");return;}
-  cfgMsg("ok","配置已保存，正在连接…");
-  const btn=$("#cfgSave");btn.disabled=true;
-  Promise.resolve(fbReinit(cfg)).then(()=>{
-    btn.disabled=false;
-    if(fb.ok){closeSetup();openAuth();}
-    else cfgMsg("err","连接失败：请检查配置是否粘贴完整，以及当前网络能否访问 Firebase。");
-  });
-};
-$("#cfgClear").onclick=()=>{
-  if(!confirm("清除本机保存的 Firebase 配置？清除后将回到「仅本机」模式。"))return;
-  fbReset();closeSetup();alert("已清除配置，当前为本机模式。随时可点右上角重新配置。");
-};
-
-/* ---------------- 双页面导航 + 学习页自动计时 ---------------- */
+/* ---------------- 双页面导航 + 进入学习页自动计时 ---------------- */
 let studySession=null,studyTick=null;
 function studyElapsedSec(){if(!studySession)return 0;let s=studySession.accum;if(studySession.lastStart!=null)s+=(performance.now()-studySession.lastStart)/1000;return s;}
 function renderStudyLive(){
